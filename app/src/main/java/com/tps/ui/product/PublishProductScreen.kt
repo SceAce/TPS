@@ -1,5 +1,9 @@
 package com.tps.ui.product
 
+/**
+ * 文件说明：商品模块界面，负责商品浏览、详情或发布流程的 Compose 展示。
+ */
+
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts

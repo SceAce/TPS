@@ -1,5 +1,9 @@
 package com.tps.ui.auth
 
+/**
+ * 文件说明：认证页面状态管理，负责登录注册流程与接口交互。
+ */
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService

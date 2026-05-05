@@ -1,5 +1,9 @@
 package com.tps.exception;
 
+/**
+ * 文件说明：异常类型定义，负责表达业务侧可识别的错误语义。
+ */
+
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 

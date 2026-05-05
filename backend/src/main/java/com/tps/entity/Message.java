@@ -1,5 +1,9 @@
 package com.tps.entity;
 
+/**
+ * 文件说明：JPA 实体定义，负责映射数据库表结构与领域对象。
+ */
+
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;

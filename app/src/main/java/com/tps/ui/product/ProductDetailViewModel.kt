@@ -1,5 +1,9 @@
 package com.tps.ui.product
 
+/**
+ * 文件说明：商品模块状态管理，负责商品列表、详情、发布与状态流转的数据编排。
+ */
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService
@@ -20,7 +24,8 @@ data class ProductDetailUiState(
     val orderError: String? = null,
     val navigateToChatId: Long? = null,
     val isOwner: Boolean = false,
-    val deleted: Boolean = false
+    val deleted: Boolean = false,
+    val actionSuccess: String? = null
 )
 
 @HiltViewModel
@@ -36,14 +41,11 @@ class ProductDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
+                // 详情接口会顺带返回当前用户是否已收藏，页面据此一次性初始化多个按钮状态。
                 val resp = apiService.getProduct(productId)
                 val product = resp.data
                 val isOwner = product?.userId == tokenManager.getUserId()
-                
-                try {
-                    if (!isOwner) apiService.recordHistory(productId)
-                } catch (_: Exception) {}
-                
+
                 _uiState.value = _uiState.value.copy(
                     product = product,
                     isLoading = false,
@@ -71,9 +73,12 @@ class ProductDetailViewModel @Inject constructor(
     fun startChat(sellerId: Long, productId: Long) {
         viewModelScope.launch {
             try {
+                // 联系卖家前先让后端按“商品 + 买家 + 卖家”归一化会话，避免同一商品反复生成新会话。
                 val resp = apiService.getOrCreateConversation(targetUserId = sellerId, productId = productId)
                 resp.data?.let { _uiState.value = _uiState.value.copy(navigateToChatId = it.id) }
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "无法创建会话")
+            }
         }
     }
 
@@ -86,7 +91,9 @@ class ProductDetailViewModel @Inject constructor(
             try {
                 val resp = apiService.toggleFavorite(productId)
                 _uiState.value = _uiState.value.copy(isFavorite = resp.data == true)
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message ?: "收藏操作失败")
+            }
         }
     }
 
@@ -94,7 +101,7 @@ class ProductDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 apiService.updateProductStatus(productId, "OFF")
-                _uiState.value = _uiState.value.copy(deleted = true)
+                _uiState.value = _uiState.value.copy(deleted = true, actionSuccess = "商品已下架")
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)
             }
@@ -105,10 +112,31 @@ class ProductDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val resp = apiService.bumpProduct(productId)
-                _uiState.value = _uiState.value.copy(product = resp.data ?: _uiState.value.product)
+                _uiState.value = _uiState.value.copy(
+                    product = resp.data ?: _uiState.value.product,
+                    actionSuccess = "商品已擦亮"
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)
             }
         }
+    }
+
+    fun updateStatus(productId: Long, status: String) {
+        viewModelScope.launch {
+            try {
+                val resp = apiService.updateProductStatus(productId, status)
+                _uiState.value = _uiState.value.copy(
+                    product = resp.data ?: _uiState.value.product,
+                    actionSuccess = if (status == "ON_SALE") "商品已重新上架" else "商品已下架"
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message)
+            }
+        }
+    }
+
+    fun consumeActionSuccess() {
+        _uiState.value = _uiState.value.copy(actionSuccess = null)
     }
 }

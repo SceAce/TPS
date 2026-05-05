@@ -1,5 +1,9 @@
 package com.tps.config;
 
+/**
+ * 文件说明：启动初始化器，负责执行兼容迁移并确保管理员账号存在。
+ */
+
 import com.tps.entity.User;
 import com.tps.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,7 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        // 先补兼容迁移，再创建管理员账号，避免老库缺字段时启动即失败。
         applySchemaCompatibilityMigrations();
 
         User admin = userRepository.findByPhone(ADMIN_PHONE).orElseGet(User::new);
@@ -35,6 +40,7 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private void applySchemaCompatibilityMigrations() {
+        // 这里做的是“尽量向前兼容”的本地开发迁移，不追求严谨版本管理，只保证旧库能跑起来。
         execute("ALTER TABLE users ADD COLUMN student_id VARCHAR(32) NULL COMMENT '学号'");
         execute("CREATE UNIQUE INDEX uk_users_student_id ON users(student_id)");
         execute("ALTER TABLE users ADD COLUMN shipping_address VARCHAR(255) NULL COMMENT '收货地址'");

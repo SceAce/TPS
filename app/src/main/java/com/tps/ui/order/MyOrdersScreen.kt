@@ -1,5 +1,9 @@
 package com.tps.ui.order
 
+/**
+ * 文件说明：订单模块界面，负责订单列表与订单状态展示。
+ */
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items

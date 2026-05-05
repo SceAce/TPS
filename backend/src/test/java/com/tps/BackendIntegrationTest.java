@@ -1,5 +1,9 @@
 package com.tps;
 
+/**
+ * 文件说明：后端集成测试入口，负责验证主要接口与配置能否协同工作。
+ */
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tps.entity.User;

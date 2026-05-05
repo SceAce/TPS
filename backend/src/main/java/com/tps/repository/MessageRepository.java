@@ -1,5 +1,9 @@
 package com.tps.repository;
 
+/**
+ * 文件说明：数据访问层，负责声明实体查询与持久化接口。
+ */
+
 import com.tps.entity.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

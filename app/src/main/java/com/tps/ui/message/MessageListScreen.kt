@@ -1,5 +1,9 @@
 package com.tps.ui.message
 
+/**
+ * 文件说明：消息模块界面，负责会话列表或聊天页面的 Compose 展示与交互。
+ */
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -22,6 +26,7 @@ import com.tps.ui.theme.MarketCard
 import com.tps.ui.theme.MarketEmptyState
 import com.tps.ui.theme.MarketHeroCard
 import com.tps.ui.theme.MarketOrange
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +35,18 @@ fun MessageListScreen(
     viewModel: MessageViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadConversations()
+    }
+
+    LaunchedEffect(Unit) {
+        // 当前消息列表还没有统一的全局推送刷新机制，因此用轻量轮询兜底未读数和最新消息预览。
+        while (true) {
+            delay(3000)
+            viewModel.loadConversations()
+        }
+    }
 
     Scaffold(containerColor = Color.Transparent, topBar = { TopAppBar(title = { Text("交易消息", fontWeight = FontWeight.Bold) }) }) { padding ->
         MarketBackground {
@@ -65,6 +82,7 @@ fun MessageListScreen(
                                     val time = if (it.length >= 16) it.substring(11, 16) else it
                                     Text(time, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
+                                // 服务端会分别维护买家和卖家的未读数，这里优先使用当前会话返回的聚合值。
                                 val unread = conv.unreadCount ?: ((conv.unreadBuyer ?: 0) + (conv.unreadSeller ?: 0))
                                 if (unread > 0) Badge(containerColor = MarketOrange) { Text(unread.toString()) }
                             }

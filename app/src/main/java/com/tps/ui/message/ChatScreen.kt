@@ -1,5 +1,9 @@
 package com.tps.ui.message
 
+/**
+ * 文件说明：消息模块界面，负责会话列表或聊天页面的 Compose 展示与交互。
+ */
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
-import coil.compose.AsyncImage
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.data.remote.dto.ProductDto
 
@@ -44,7 +47,9 @@ fun ChatScreen(
     val messages by viewModel.messages.collectAsState()
     val title by viewModel.title.collectAsState()
     val product by viewModel.product.collectAsState()
+    val error by viewModel.error.collectAsState()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var input by remember { mutableStateOf("") }
     val quickPhrases = listOf("还在吗？", "能便宜点吗？", "在哪里面交？", "可以看看细节图吗？")
 
@@ -56,105 +61,117 @@ fun ChatScreen(
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F7F7))) {
-        TopAppBar(
-            title = { Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-            navigationIcon = {
-                IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F7F7))
-        )
-        product?.let { prod ->
-            Surface(
-                color = Color.White,
-                tonalElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth().clickable { onNavigateToDetail(prod.id) }
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AppAsyncImage(
-                        url = resolveMediaUrl(prod.imageUrls.firstOrNull()),
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(prod.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("¥${prod.price}", color = Color(0xFFE93600), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            if (prod.status == "ON_SALE" || prod.status == "AVAILABLE") {
-                                Text("在售", color = MarketOrange, fontSize = 10.sp, modifier = Modifier.background(Color(0xFFFFE1D2), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 2.dp))
-                            } else {
-                                Text(prod.status, color = Color.Gray, fontSize = 10.sp)
-                            }
-                        }
-                    }
-                }
-            }
+    LaunchedEffect(error) {
+        error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
         }
-        MarketBackground(modifier = Modifier.weight(1f)) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 12.dp, bottom = 16.dp)
-            ) {
-                items(messages) { msg ->
-                    MessageBubble(msg, viewModel.myUserId, product)
-                }
-            }
-        }
-        Surface(
-            color = Color(0xFFF7F7F7),
-            tonalElevation = 8.dp,
-            modifier = Modifier.imePadding().navigationBarsPadding()
-        ) {
-            Column {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+    }
+
+    Scaffold(
+        containerColor = Color(0xFFF7F7F7),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFFF7F7F7))) {
+            TopAppBar(
+                title = { Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F7F7))
+            )
+            product?.let { prod ->
+                Surface(
+                    color = Color.White,
+                    tonalElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth().clickable { onNavigateToDetail(prod.id) }
                 ) {
-                    items(quickPhrases) { phrase ->
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color.White,
-                            modifier = Modifier.clickable { input = phrase }
-                        ) {
-                            Text(phrase, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = Color(0xFF241A16))
-                        }
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = input,
-                        onValueChange = { input = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("想跟Ta说点什么...") },
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        )
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    FilledIconButton(
-                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MarketOrange),
-                        onClick = {
-                            if (input.isNotBlank()) {
-                                viewModel.sendMessage(input)
-                                input = ""
-                            }
-                        }
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Send, null)
+                        AppAsyncImage(
+                            url = resolveMediaUrl(prod.imageUrls.firstOrNull()),
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(prod.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("¥${prod.price}", color = Color(0xFFE93600), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                if (prod.status == "ON_SALE" || prod.status == "AVAILABLE") {
+                                    Text("在售", color = MarketOrange, fontSize = 10.sp, modifier = Modifier.background(Color(0xFFFFE1D2), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 2.dp))
+                                } else {
+                                    Text(prod.status, color = Color.Gray, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            MarketBackground(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = 12.dp, bottom = 16.dp)
+                ) {
+                    items(messages) { msg ->
+                        MessageBubble(msg, viewModel.myUserId, product)
+                    }
+                }
+            }
+            Surface(
+                color = Color(0xFFF7F7F7),
+                tonalElevation = 8.dp,
+                modifier = Modifier.imePadding().navigationBarsPadding()
+            ) {
+                Column {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(quickPhrases) { phrase ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                modifier = Modifier.clickable { input = phrase }
+                            ) {
+                                Text(phrase, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = Color(0xFF241A16))
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = input,
+                            onValueChange = { input = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("想跟Ta说点什么...") },
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent
+                            )
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        FilledIconButton(
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MarketOrange),
+                            onClick = {
+                                if (input.isNotBlank()) {
+                                    viewModel.sendMessage(input)
+                                    input = ""
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Send, null)
+                        }
                     }
                 }
             }

@@ -1,5 +1,9 @@
 package com.tps.service;
 
+/**
+ * 文件说明：业务服务层，负责封装核心业务规则、事务与对象组装。
+ */
+
 import com.tps.dto.product.ProductRequest;
 import com.tps.dto.product.ProductResponse;
 import com.tps.entity.Notification;
@@ -59,6 +63,7 @@ public class ProductService {
     }
 
     public Page<ProductResponse> list(int page, int size, Long currentUserId) {
+        // 商品列表优先看最近擦亮，其次看发布时间，贴合二手交易首页的曝光逻辑。
         Pageable pageable = PageRequest.of(page, size,
                 Sort.by(Sort.Order.desc("bumpedAt"), Sort.Order.desc("createdAt")));
         return productRepository.findByStatus(Product.ProductStatus.ON_SALE, pageable)
@@ -150,6 +155,8 @@ public class ProductService {
         if (product.getStatus() != Product.ProductStatus.ON_SALE) {
             throw new IllegalArgumentException("只有在售商品可以擦亮");
         }
+
+        // 擦亮次数按天重置，并且锁定当前商品记录，避免并发点击把次数冲破每日上限。
         LocalDate today = LocalDate.now();
         if (!today.equals(product.getLastBumpDate())) {
             product.setLastBumpDate(today);

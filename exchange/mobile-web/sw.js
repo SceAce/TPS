@@ -1,3 +1,5 @@
+// 文件说明：移动 Web Service Worker，负责缓存与离线访问能力。
+
 const CACHE_NAME = "campus-exchange-cache-v2";
 const APP_ASSETS = [
   "./",

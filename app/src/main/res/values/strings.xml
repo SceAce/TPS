@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 资源说明：字符串资源文件，负责集中管理界面文本常量。 -->
 <resources>
     <string name="app_name">MY校园淘二手</string>
 </resources>

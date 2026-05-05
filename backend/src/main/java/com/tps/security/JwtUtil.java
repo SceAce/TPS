@@ -1,5 +1,9 @@
 package com.tps.security;
 
+/**
+ * 文件说明：JWT 工具类，负责令牌生成、解析与合法性校验。
+ */
+
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;

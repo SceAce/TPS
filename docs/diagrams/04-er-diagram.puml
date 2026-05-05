@@ -1,0 +1,165 @@
+@startuml
+' 图说明：本图展示核心业务实体、主键外键与主要关联关系。
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+
+title TPS 数据库 ER 图
+
+entity 用户 {
+  *编号 : bigint
+  --
+  手机号 : varchar
+  学号 : varchar
+  密码哈希 : varchar
+  昵称 : varchar
+  头像地址 : varchar
+  信用分 : int
+  角色 : enum
+  状态 : enum
+  个人简介 : varchar
+  所在地 : varchar
+  收货地址 : varchar
+  创建时间 : datetime
+}
+
+entity 商品 {
+  *编号 : bigint
+  --
+  用户编号 : bigint
+  标题 : varchar
+  描述 : text
+  价格 : decimal
+  分类 : varchar
+  成色 : enum
+  状态 : enum
+  所在地 : varchar
+  浏览量 : int
+  收藏数 : int
+  最新擦亮时间 : datetime
+  创建时间 : datetime
+}
+
+entity 商品图片 {
+  *编号 : bigint
+  --
+  商品编号 : bigint
+  图片地址 : varchar
+  排序号 : int
+}
+
+entity 收藏 {
+  *编号 : bigint
+  --
+  用户编号 : bigint
+  商品编号 : bigint
+  创建时间 : datetime
+}
+
+entity 浏览历史 {
+  *编号 : bigint
+  --
+  用户编号 : bigint
+  商品编号 : bigint
+  浏览时间 : datetime
+}
+
+entity 会话 {
+  *编号 : bigint
+  --
+  买家编号 : bigint
+  卖家编号 : bigint
+  商品编号 : bigint
+  最后一条消息 : varchar
+  买家未读数 : int
+  卖家未读数 : int
+  更新时间 : datetime
+}
+
+entity 消息 {
+  *编号 : bigint
+  --
+  会话编号 : bigint
+  发送者编号 : bigint
+  内容 : text
+  类型 : enum
+  是否已读 : boolean
+  创建时间 : datetime
+}
+
+entity 订单 {
+  *编号 : bigint
+  --
+  商品编号 : bigint
+  买家编号 : bigint
+  卖家编号 : bigint
+  价格 : decimal
+  状态 : enum
+  备注 : varchar
+  物流单号 : varchar
+  创建时间 : datetime
+}
+
+entity 评价 {
+  *编号 : bigint
+  --
+  订单编号 : bigint
+  评价者编号 : bigint
+  被评价者编号 : bigint
+  评分 : int
+  内容 : varchar
+  创建时间 : datetime
+}
+
+entity 举报 {
+  *编号 : bigint
+  --
+  举报者编号 : bigint
+  商品编号 : bigint
+  原因 : varchar
+  状态 : enum
+  创建时间 : datetime
+}
+
+entity 通知 {
+  *编号 : bigint
+  --
+  用户编号 : bigint
+  类型 : varchar
+  标题 : varchar
+  内容 : varchar
+  是否已读 : boolean
+  创建时间 : datetime
+}
+
+entity 反馈 {
+  *编号 : bigint
+  --
+  用户编号 : bigint
+  内容 : text
+  回复 : text
+  状态 : enum
+  创建时间 : datetime
+}
+
+用户 ||--o{ 商品 : 发布
+商品 ||--o{ 商品图片 : 包含
+用户 ||--o{ 收藏 : 创建
+商品 ||--o{ 收藏 : 被收藏
+用户 ||--o{ 浏览历史 : 产生
+商品 ||--o{ 浏览历史 : 被浏览
+商品 ||--o{ 会话 : 关联
+会话 ||--o{ 消息 : 包含
+用户 ||--o{ 消息 : 发送
+商品 ||--o{ 订单 : 对应
+用户 ||--o{ 订单 : 购买
+用户 ||--o{ 订单 : 出售
+订单 ||--o{ 评价 : 产生
+用户 ||--o{ 评价 : 编写
+用户 ||--o{ 评价 : 接收
+用户 ||--o{ 举报 : 提交
+商品 ||--o{ 举报 : 被举报
+用户 ||--o{ 通知 : 接收
+用户 ||--o{ 反馈 : 提交
+
+@enduml

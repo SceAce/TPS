@@ -1,5 +1,9 @@
 package com.tps.util
 
+/**
+ * 文件说明：令牌管理工具，负责保存、读取和解析登录态信息。
+ */
+
 import android.content.Context
 import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext

@@ -1,3 +1,5 @@
+-- 脚本说明：数据库初始化脚本，负责创建核心表结构与基础数据。
+
 CREATE DATABASE IF NOT EXISTS tps DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tps;
 

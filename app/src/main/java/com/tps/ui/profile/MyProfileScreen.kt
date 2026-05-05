@@ -1,5 +1,9 @@
 package com.tps.ui.profile
 
+/**
+ * 文件说明：个人中心界面，负责资料、收藏、历史、反馈等页面展示。
+ */
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background

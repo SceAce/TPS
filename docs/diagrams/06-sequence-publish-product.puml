@@ -1,0 +1,30 @@
+@startuml
+' 图说明：本图展示用户发布商品时前后端之间的时序交互。
+autonumber
+skinparam shadowing false
+
+title 发布商品时序图
+
+actor "卖家" as Seller
+participant "安卓客户端" as App
+participant "商品控制器" as Controller
+participant "商品服务" as Service
+participant "文件服务" as FileService
+database "数据库" as DB
+collections "图片目录 img/" as Storage
+
+Seller -> App : 填写商品信息并提交
+App -> FileService : 上传商品图片
+FileService -> Storage : 保存图片文件
+FileService --> App : 返回图片 URL 列表
+
+App -> Controller : 提交发布商品请求
+Controller -> Service : 创建商品
+Service -> DB : 写入 products
+Service -> DB : 写入 product_images
+DB --> Service : 返回商品记录
+Service --> Controller : 商品信息
+Controller --> App : 发布成功响应
+App --> Seller : 显示“发布成功”并跳转详情页
+
+@enduml

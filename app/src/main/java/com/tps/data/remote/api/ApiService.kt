@@ -1,5 +1,9 @@
 package com.tps.data.remote.api
 
+/**
+ * 文件说明：Retrofit 接口定义，负责声明 Android 端可调用的后端 API。
+ */
+
 import com.tps.data.remote.dto.*
 import okhttp3.MultipartBody
 import retrofit2.http.*
@@ -68,7 +72,7 @@ interface ApiService {
     suspend fun getMyProducts(): ApiResponse<List<ProductDto>>
 
     // Favorites
-    @POST("api/favorites/{productId}")
+    @POST("api/favorites/{productId}/toggle")
     suspend fun toggleFavorite(@Path("productId") productId: Long): ApiResponse<Boolean>
 
     @GET("api/favorites")
@@ -116,6 +120,18 @@ interface ApiService {
         @Path("conversationId") conversationId: Long
     ): ApiResponse<List<MessageDto>>
 
+    @POST("api/messages/{conversationId}")
+    suspend fun sendMessage(
+        @Path("conversationId") conversationId: Long,
+        @Query("content") content: String,
+        @Query("type") type: String = "TEXT"
+    ): ApiResponse<MessageDto>
+
+    @PUT("api/messages/{conversationId}/read")
+    suspend fun markConversationRead(
+        @Path("conversationId") conversationId: Long
+    ): ApiResponse<Unit>
+
     @POST("api/messages/conversation")
     suspend fun getOrCreateConversation(
         @Query("targetUserId") targetUserId: Long,
@@ -140,7 +156,10 @@ interface ApiService {
     suspend fun recordHistory(@Path("productId") productId: Long): ApiResponse<Unit>
 
     @GET("api/history/products")
-    suspend fun getHistory(): ApiResponse<List<ProductDto>>
+    suspend fun getHistory(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 50
+    ): ApiResponse<PageResponse<ProductDto>>
 
     @DELETE("api/history/products")
     suspend fun clearHistory(): ApiResponse<Unit>
@@ -150,7 +169,10 @@ interface ApiService {
     suspend fun submitFeedback(@Body req: FeedbackRequest): ApiResponse<FeedbackDto>
 
     @GET("api/feedback/my")
-    suspend fun getMyFeedback(): ApiResponse<List<FeedbackDto>>
+    suspend fun getMyFeedback(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 50
+    ): ApiResponse<PageResponse<FeedbackDto>>
 
     // Admin
     @GET("api/admin/users")
@@ -167,6 +189,12 @@ interface ApiService {
 
     @PUT("api/admin/products/{id}/takedown")
     suspend fun adminTakedownProduct(@Path("id") id: Long): ApiResponse<Unit>
+
+    @PUT("api/admin/reports/{id}/handle")
+    suspend fun adminHandleReport(
+        @Path("id") id: Long,
+        @Query("takedown") takedown: Boolean = true
+    ): ApiResponse<Unit>
 
     @GET("api/admin/orders")
     suspend fun adminGetOrders(@Query("page") page: Int = 0): ApiResponse<PageResponse<OrderDto>>

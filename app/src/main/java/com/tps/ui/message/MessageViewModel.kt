@@ -1,5 +1,9 @@
 package com.tps.ui.message
 
+/**
+ * 文件说明：消息模块状态管理，负责会话列表、聊天消息与已读状态编排。
+ */
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService

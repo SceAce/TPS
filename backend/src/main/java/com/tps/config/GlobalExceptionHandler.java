@@ -1,5 +1,9 @@
 package com.tps.config;
 
+/**
+ * 文件说明：全局异常处理器，负责把后端异常转换成统一接口响应。
+ */
+
 import com.tps.dto.ApiResponse;
 import com.tps.exception.BusinessException;
 import org.springframework.http.HttpStatus;

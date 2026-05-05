@@ -1,5 +1,9 @@
 package com.tps.ui.admin
 
+/**
+ * 文件说明：管理员模块界面，负责后台管理页面的 Compose 展示与交互。
+ */
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons

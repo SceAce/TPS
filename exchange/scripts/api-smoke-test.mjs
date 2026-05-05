@@ -1,3 +1,5 @@
+// 文件说明：前端辅助脚本，负责调试、预处理或本地服务辅助任务。
+
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 

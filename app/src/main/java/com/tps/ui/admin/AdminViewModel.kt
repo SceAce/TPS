@@ -1,5 +1,9 @@
 package com.tps.ui.admin
 
+/**
+ * 文件说明：管理员页面状态管理，负责后台管理数据加载与操作编排。
+ */
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService
@@ -93,10 +97,10 @@ class AdminViewModel @Inject constructor(
         }
     }
 
-    fun takeDownProduct(productId: Long) {
+    fun handleReport(reportId: Long, takedown: Boolean) {
         viewModelScope.launch {
             try {
-                apiService.adminTakedownProduct(productId)
+                apiService.adminHandleReport(reportId, takedown)
                 loadReportedProducts()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)

@@ -1,0 +1,53 @@
+@startuml
+' 图说明：本图展示 Android 客户端、Spring Boot 后端、数据库与静态资源之间的总体架构。
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title TPS 校园二手交易系统总体架构图
+
+node "安卓应用" {
+  component "界面层\n登录/首页/商品/消息/个人中心/管理" as UI
+  component "视图模型" as VM
+  component "接口服务" as API
+  component "实时通信客户端" as WSClient
+  component "令牌管理" as TokenManager
+}
+
+node "后端服务" {
+  component "控制器层" as Controller
+  component "业务层" as Service
+  component "数据访问层" as Repository
+  component "安全控制\nJWT + 角色权限" as Security
+  component "实时消息控制器" as WSController
+  component "文件服务" as FileService
+}
+
+database "数据库" as MySQL
+folder "本地图片目录 img/" as ImgDir
+
+UI --> VM
+VM --> API
+VM --> WSClient
+VM --> TokenManager
+
+API --> Controller : 接口请求
+WSClient --> WSController : 实时消息
+Controller --> Security
+Controller --> Service
+WSController --> Service
+Service --> Repository
+Service --> FileService
+Repository --> MySQL
+FileService --> ImgDir
+
+note bottom of Service
+核心服务：
+- 认证服务
+- 商品服务
+- 订单服务
+- 消息服务
+- 管理服务
+- 反馈服务
+end note
+
+@enduml

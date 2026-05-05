@@ -1,3 +1,5 @@
+# 配置说明：测试环境配置文件，负责为集成测试提供独立参数。
+
 spring:
   datasource:
     url: jdbc:h2:mem:tps_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1

@@ -1,5 +1,9 @@
 package com.tps.ui.product
 
+/**
+ * 文件说明：商品模块界面，负责商品浏览、详情或发布流程的 Compose 展示。
+ */
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -60,6 +64,12 @@ fun ProductDetailScreen(
     LaunchedEffect(uiState.error) {
         uiState.error?.let { snackbarHostState.showSnackbar(it) }
     }
+    LaunchedEffect(uiState.actionSuccess) {
+        uiState.actionSuccess?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.consumeActionSuccess()
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFFFFF7F0),
@@ -71,10 +81,10 @@ fun ProductDetailScreen(
                 if (showDeleteDialog) {
                     AlertDialog(
                         onDismissRequest = { showDeleteDialog = false },
-                        title = { Text("删除商品") },
-                        text = { Text("确定要删除该商品吗？此操作不可恢复。") },
+                        title = { Text("下架商品") },
+                        text = { Text("确定要下架该商品吗？下架后可以重新上架。") },
                         confirmButton = {
-                            TextButton(onClick = { viewModel.deleteProduct(product.id) }) { Text("删除", color = MaterialTheme.colorScheme.error) }
+                            TextButton(onClick = { viewModel.deleteProduct(product.id) }) { Text("下架", color = MaterialTheme.colorScheme.error) }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDeleteDialog = false }) { Text("取消") }
@@ -98,7 +108,7 @@ fun ProductDetailScreen(
                             }
                             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                                 DropdownMenuItem(
-                                    text = { Text("删除商品", color = MaterialTheme.colorScheme.error) },
+                                    text = { Text("下架商品", color = MaterialTheme.colorScheme.error) },
                                     onClick = { showMenu = false; showDeleteDialog = true }
                                 )
                             }
@@ -144,14 +154,19 @@ fun ProductDetailScreen(
                 ) {
                     if (uiState.isOwner) {
                         OutlinedButton(
-                            onClick = { },
+                            onClick = { viewModel.bumpProduct(product.id) },
                             modifier = Modifier.weight(1f)
                         ) { Text("擦亮商品") }
                         Button(
-                            onClick = { },
+                            onClick = {
+                                val nextStatus = if (product.status == "ON_SALE" || product.status == "AVAILABLE") "OFF" else "ON_SALE"
+                                viewModel.updateStatus(product.id, nextStatus)
+                            },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5A1F))
-                        ) { Text("管理商品") }
+                        ) {
+                            Text(if (product.status == "ON_SALE" || product.status == "AVAILABLE") "下架商品" else "重新上架")
+                        }
                     } else {
                         OutlinedButton(
                             onClick = { viewModel.startChat(product.userId, product.id) },

@@ -1,0 +1,93 @@
+@startuml
+' 图说明：本图展示后端核心领域对象、服务与仓储之间的类关系。
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+title TPS 核心类图
+
+package "控制器层" {
+  class 认证控制器
+  class 商品控制器
+  class 订单控制器
+  class 消息控制器
+  class 管理控制器
+}
+
+package "业务层" {
+  class 认证服务
+  class 商品服务
+  class 订单服务
+  class 消息服务
+  class 管理服务
+  class 反馈服务
+  class 文件服务
+}
+
+package "实体层" {
+  class 用户
+  class 商品
+  class 商品图片
+  class 订单
+  class 会话
+  class 消息
+  class 评价
+  class 举报
+  class 收藏
+  class 通知
+  class 反馈
+  class 浏览历史
+}
+
+package "数据访问层" {
+  interface 用户仓库
+  interface 商品仓库
+  interface 订单仓库
+  interface 消息仓库
+  interface 会话仓库
+  interface 评价仓库
+  interface 举报仓库
+  interface 收藏仓库
+  interface 通知仓库
+  interface 反馈仓库
+}
+
+认证控制器 --> 认证服务
+商品控制器 --> 商品服务
+商品控制器 --> 文件服务
+订单控制器 --> 订单服务
+消息控制器 --> 消息服务
+管理控制器 --> 管理服务
+管理控制器 --> 反馈服务
+
+认证服务 --> 用户仓库
+商品服务 --> 商品仓库
+商品服务 --> 举报仓库
+商品服务 --> 收藏仓库
+商品服务 --> 通知仓库
+商品服务 --> 文件服务
+订单服务 --> 订单仓库
+订单服务 --> 商品仓库
+订单服务 --> 评价仓库
+订单服务 --> 用户仓库
+订单服务 --> 通知仓库
+消息服务 --> 会话仓库
+消息服务 --> 消息仓库
+消息服务 --> 商品仓库
+消息服务 --> 用户仓库
+管理服务 --> 用户仓库
+管理服务 --> 商品仓库
+管理服务 --> 订单仓库
+管理服务 --> 举报仓库
+管理服务 --> 通知仓库
+反馈服务 --> 反馈仓库
+
+用户 "1" <-- "*" 商品 : 卖家
+商品 "1" <-- "*" 商品图片
+商品 "1" <-- "*" 订单
+会话 "1" <-- "*" 消息
+订单 "1" <-- "*" 评价
+商品 "1" <-- "*" 举报
+用户 "1" <-- "*" 收藏
+商品 "1" <-- "*" 收藏
+
+@enduml

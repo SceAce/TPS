@@ -1,5 +1,9 @@
 package com.tps.config;
 
+/**
+ * 文件说明：安全配置类，负责定义接口放行规则、JWT 过滤器与异常响应。
+ */
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tps.dto.ApiResponse;
 import com.tps.security.JwtAuthFilter;
@@ -39,6 +43,7 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // 登录、图片访问、WebSocket 握手和接口文档需要在未登录时也能访问。
                 .requestMatchers(
                     "/api/auth/**",
                     "/img/**",
@@ -70,6 +75,7 @@ public class SecurityConfig {
                     objectMapper.writeValue(response.getWriter(), ApiResponse.fail(403, "无权限"));
                 })
             )
+            // JWT 过滤器要放在用户名密码过滤器之前，确保请求一进入业务层就已经带上用户身份。
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

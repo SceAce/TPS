@@ -1,3 +1,4 @@
+<!-- 资源说明：Web 端图标资源，负责提供应用图标矢量图。 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="MY校园淘二手图标">
   <defs>
     <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">

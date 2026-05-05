@@ -1,5 +1,9 @@
 package com.tps.service;
 
+/**
+ * 文件说明：业务服务层，负责封装核心业务规则、事务与对象组装。
+ */
+
 import com.tps.dto.message.ConversationResponse;
 import com.tps.dto.message.MessageResponse;
 import com.tps.entity.Conversation;
@@ -34,6 +38,8 @@ public class MessageService {
                 .orElseThrow(() -> new IllegalArgumentException("商品不存在"));
         userRepository.findById(targetUserId)
                 .orElseThrow(() -> new IllegalArgumentException("目标用户不存在"));
+
+        // 会话按“商品 + 买家 + 卖家”唯一化，谁先发起聊天都落到同一条会话记录上。
         Long sellerId = product.getUserId();
         Long buyerId = userId.equals(sellerId) ? targetUserId : userId;
         if (!targetUserId.equals(sellerId) && !userId.equals(sellerId)) {
@@ -69,6 +75,8 @@ public class MessageService {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("消息内容不能为空");
         }
+
+        // 无论消息是从 REST 兜底发来还是从 WebSocket 控制器转过来，最终都会复用同一套持久化逻辑。
         Conversation conv = getOwnedConversation(conversationId, senderId);
         Message msg = new Message();
         msg.setConversationId(conversationId);
@@ -100,6 +108,8 @@ public class MessageService {
     public void markRead(Long conversationId, Long userId) {
         Conversation conversation = getOwnedConversation(conversationId, userId);
         messageRepository.markReadByConversationAndReceiver(conversationId, userId);
+
+        // 会话表单独维护买家和卖家的未读数，标记已读时要同步把当前用户那一侧计数清零。
         if (conversation.getBuyerId().equals(userId)) {
             conversation.setUnreadBuyer(0);
         } else {

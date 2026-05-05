@@ -1,5 +1,9 @@
 package com.tps.security;
 
+/**
+ * 文件说明：JWT 鉴权过滤器，负责从请求头解析令牌并建立当前用户身份。
+ */
+
 import com.tps.entity.User;
 import com.tps.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -34,6 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 Long userId = jwtUtil.getUserId(token);
                 String role = jwtUtil.getRole(token);
                 userRepository.findById(userId).ifPresent(user -> {
+                    // 只有状态正常的账号才允许进入安全上下文，避免被封禁账号拿着旧 token 继续访问。
                     if (user.getStatus() == User.UserStatus.ACTIVE) {
                         var auth = new UsernamePasswordAuthenticationToken(
                                 userId, null,

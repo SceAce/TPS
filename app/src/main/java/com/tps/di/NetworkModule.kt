@@ -1,5 +1,9 @@
 package com.tps.di
 
+/**
+ * 文件说明：依赖注入模块，负责提供网络层、序列化与持久化单例。
+ */
+
 import com.google.gson.Gson
 import com.tps.data.remote.FallbackBaseUrlInterceptor
 import com.tps.data.remote.NetworkEndpointConfig

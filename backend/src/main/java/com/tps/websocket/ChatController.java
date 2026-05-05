@@ -1,5 +1,9 @@
 package com.tps.websocket;
 
+/**
+ * 文件说明：WebSocket 消息入口与载荷定义，负责聊天实时通信链路。
+ */
+
 import com.tps.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;

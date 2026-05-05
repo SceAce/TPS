@@ -1,3 +1,5 @@
+// 文件说明：移动 Web 端主逻辑脚本，负责页面交互、数据请求和状态渲染。
+
 const STORAGE_KEY = "campus_exchange_data_v2";
 const USER_KEY = "campus_exchange_user_v1";
 const TOKEN_KEY = "campus_exchange_token_v1";

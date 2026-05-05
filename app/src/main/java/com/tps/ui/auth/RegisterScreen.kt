@@ -1,5 +1,9 @@
 package com.tps.ui.auth
 
+/**
+ * 文件说明：认证模块界面，负责登录注册页面的 Compose 展示与输入交互。
+ */
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape

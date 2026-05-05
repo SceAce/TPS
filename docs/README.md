@@ -1,5 +1,8 @@
 # TPS 文档中心
 
+> 文档说明：本文件是项目文档总览，说明每份工程文档的用途与阅读顺序。
+
+
 **版本：** v1.1  
 **日期：** 2026-04-28  
 **项目定位：** Android 移动端二手交易平台 + Spring Boot 后端服务
@@ -29,6 +32,13 @@
 | `api-contract.md` | REST / WebSocket 接口契约、响应格式、错误码 | 后端 / APP / Gemini |
 | `android-integration-guide.md` | Android 真机联调、网络、图片、WebSocket、鉴权约定 | APP / 后端 |
 | `production-readiness.md` | 生产环境配置、安全、部署、测试、验收清单 | 后端 / 运维 |
+| `requirements-traceability-matrix.md` | 需求-设计-接口-测试追踪 | 全体 |
+| `detailed-design.md` | 模块设计、状态流转、异常处理 | 后端 / APP |
+| `database-design.md` | 表结构细化、约束、索引说明 | 后端 |
+| `test-plan.md` | 测试范围、策略、风险 | 后端 / 测试 |
+| `test-cases.md` | 详细测试用例表 | 后端 / 测试 |
+| `operation-manual.md` | 启动、验证、备份、故障排查 | 运维 / 后端 |
+| `use-case-specification.md` | 标准化用例说明书 | 产品 / 设计 / 课程文档 |
 
 ---
 

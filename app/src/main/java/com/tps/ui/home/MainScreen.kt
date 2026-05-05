@@ -1,5 +1,9 @@
 package com.tps.ui.home
 
+/**
+ * 文件说明：首页模块界面，负责主入口与底部功能页的整合。
+ */
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons

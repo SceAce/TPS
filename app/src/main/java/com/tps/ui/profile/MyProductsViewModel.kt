@@ -1,5 +1,9 @@
 package com.tps.ui.profile
 
+/**
+ * 文件说明：个人中心状态管理，负责资料、收藏、历史、反馈等数据编排。
+ */
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService

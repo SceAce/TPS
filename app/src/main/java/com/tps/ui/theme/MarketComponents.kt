@@ -1,5 +1,9 @@
 package com.tps.ui.theme
 
+/**
+ * 文件说明：主题与通用组件定义，负责统一界面视觉风格与可复用组件。
+ */
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -120,7 +124,7 @@ fun StatusPill(text: String, color: Color = MarketOrange) {
 fun resolveMediaUrl(url: String?): String? {
     if (url.isNullOrBlank()) return null
     if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("content://") || url.startsWith("file://") || url.startsWith("android.resource://")) return url
-    val base = com.tps.data.remote.NetworkEndpointConfig.primaryApiBaseUrl.toString()
+    val base = com.tps.data.remote.NetworkEndpointConfig.lastWorkingApiBaseUrl.toString()
     return if (url.startsWith("/")) base + url.drop(1) else base + url
 }
 

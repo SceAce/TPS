@@ -1,5 +1,9 @@
 package com.tps.controller;
 
+/**
+ * 文件说明：控制器层，负责接收相关 HTTP 请求并委托业务层处理。
+ */
+
 import com.tps.dto.ApiResponse;
 import com.tps.dto.PageResponse;
 import com.tps.security.JwtUtil;

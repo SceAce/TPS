@@ -1,5 +1,9 @@
 package com.tps.ui.product
 
+/**
+ * 文件说明：商品模块状态管理，负责商品列表、详情、发布与状态流转的数据编排。
+ */
+
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns

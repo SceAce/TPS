@@ -1,5 +1,9 @@
 package com.tps.service;
 
+/**
+ * 文件说明：业务服务层，负责封装核心业务规则、事务与对象组装。
+ */
+
 import com.tps.dto.file.UploadResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

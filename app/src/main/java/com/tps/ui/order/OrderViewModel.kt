@@ -1,5 +1,9 @@
 package com.tps.ui.order
 
+/**
+ * 文件说明：订单模块状态管理，负责订单查询、筛选与状态操作。
+ */
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService

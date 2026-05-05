@@ -1,3 +1,5 @@
+// 文件说明：本地预览服务器脚本，负责托管静态资源与开发调试。
+
 const http = require("http");
 const fs = require("fs");
 const fsp = fs.promises;

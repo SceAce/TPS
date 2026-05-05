@@ -1,5 +1,9 @@
 package com.tps.data.remote.dto
 
+/**
+ * 文件说明：Android 侧数据传输对象集合，负责承接接口请求与响应字段。
+ */
+
 import com.google.gson.annotations.SerializedName
 
 data class ApiResponse<T>(
@@ -34,6 +38,7 @@ data class LoginRequest(
 
 data class LoginResponse(
     val token: String,
+    val refreshToken: String,
     val userId: Long,
     val nickname: String,
     val avatarUrl: String?,
@@ -141,10 +146,12 @@ data class ConversationDto(
 
 data class MessageDto(
     val id: Long,
+    val conversationId: Long? = null,
     val senderId: Long,
     val content: String,
     val type: String,
-    val createdAt: String
+    val createdAt: String,
+    val isRead: Boolean? = null
 )
 
 // Notification
@@ -177,12 +184,14 @@ data class FeedbackRequest(
 data class FeedbackDto(
     val id: Long,
     val userId: Long,
+    val userNickname: String? = null,
     val type: String,
     val content: String,
     val contact: String?,
     val status: String,
     val reply: String?,
-    val createdAt: String?
+    val createdAt: String?,
+    val updatedAt: String? = null
 )
 
 // Admin

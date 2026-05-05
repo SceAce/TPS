@@ -1,5 +1,9 @@
 package com.tps.config;
 
+/**
+ * 文件说明：WebSocket 配置类，负责 STOMP 端点、消息代理与连接鉴权。
+ */
+
 import com.tps.entity.User;
 import com.tps.repository.UserRepository;
 import com.tps.security.JwtUtil;
@@ -31,6 +35,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
+        // 课程项目使用内存 broker 就够用，部署简单，真机联调时也方便直接起服务测试。
         registry.enableSimpleBroker("/topic", "/queue");
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
@@ -38,6 +43,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Android 端实际连的是 SockJS 暴露出的 `/ws/websocket`，这里必须开启 SockJS 支持。
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
@@ -50,6 +56,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    // WebSocket 握手头不一定能被后续 STOMP 层直接复用，因此在 CONNECT 帧里再解析一次 JWT。
                     String authorization = accessor.getFirstNativeHeader("Authorization");
                     if (authorization == null) {
                         authorization = accessor.getFirstNativeHeader("authorization");

@@ -1,5 +1,9 @@
 package com.tps.ui.theme
 
+/**
+ * 文件说明：主题与通用组件定义，负责统一界面视觉风格与可复用组件。
+ */
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable

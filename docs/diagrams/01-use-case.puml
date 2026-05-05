@@ -1,0 +1,88 @@
+@startuml
+' 图说明：本图展示校园二手交易系统的参与者与核心用例关系。
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam shadowing false
+
+title TPS 校园二手交易系统用例图
+
+actor "普通用户" as User
+actor "买家" as Buyer
+actor "卖家" as Seller
+actor "管理员" as Admin
+
+rectangle "TPS 校园二手交易系统" {
+  usecase "注册/登录" as UC_Login
+  usecase "维护个人资料" as UC_Profile
+  usecase "浏览商品" as UC_Browse
+  usecase "搜索与筛选商品" as UC_Search
+  usecase "查看商品详情" as UC_Detail
+  usecase "发布商品" as UC_Publish
+  usecase "编辑商品" as UC_Edit
+  usecase "下架/重新上架商品" as UC_OffShelf
+  usecase "收藏商品" as UC_Favorite
+  usecase "查看浏览历史" as UC_History
+  usecase "发起会话/私信沟通" as UC_Chat
+  usecase "创建订单" as UC_Order
+  usecase "支付订单" as UC_Pay
+  usecase "发货" as UC_Ship
+  usecase "确认收货" as UC_Confirm
+  usecase "申请退款" as UC_Refund
+  usecase "评价交易对象" as UC_Review
+  usecase "举报商品" as UC_Report
+  usecase "提交反馈" as UC_Feedback
+  usecase "查看通知" as UC_Notice
+
+  usecase "查看平台统计" as UC_Stats
+  usecase "管理用户" as UC_UserAdmin
+  usecase "处理举报" as UC_ReportAdmin
+  usecase "强制下架商品" as UC_Takedown
+  usecase "查看订单并处理纠纷" as UC_OrderAdmin
+  usecase "回复用户反馈" as UC_FeedbackAdmin
+  usecase "发布系统公告" as UC_Announcement
+}
+
+User --> UC_Login
+User --> UC_Profile
+User --> UC_Browse
+User --> UC_Search
+User --> UC_Detail
+User --> UC_Favorite
+User --> UC_History
+User --> UC_Notice
+User --> UC_Feedback
+
+Buyer --> UC_Chat
+Buyer --> UC_Order
+Buyer --> UC_Pay
+Buyer --> UC_Confirm
+Buyer --> UC_Refund
+Buyer --> UC_Review
+Buyer --> UC_Report
+
+Seller --> UC_Publish
+Seller --> UC_Edit
+Seller --> UC_OffShelf
+Seller --> UC_Chat
+Seller --> UC_Ship
+Seller --> UC_Review
+
+Admin --> UC_Stats
+Admin --> UC_UserAdmin
+Admin --> UC_ReportAdmin
+Admin --> UC_Takedown
+Admin --> UC_OrderAdmin
+Admin --> UC_FeedbackAdmin
+Admin --> UC_Announcement
+
+UC_Search .> UC_Browse : <<扩展>>
+UC_Detail .> UC_Browse : <<包含>>
+UC_Pay .> UC_Order : <<扩展>>
+UC_Ship .> UC_Order : <<扩展>>
+UC_Confirm .> UC_Order : <<扩展>>
+UC_Refund .> UC_Order : <<扩展>>
+UC_Review .> UC_Order : <<扩展>>
+UC_ReportAdmin .> UC_Takedown : <<包含>>
+
+@enduml

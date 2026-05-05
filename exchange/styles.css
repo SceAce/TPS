@@ -1,3 +1,5 @@
+/* 文件说明：Web 端样式表，负责整体布局与视觉表现。 */
+
 :root {
   --paper: #fff5ed;
   --paper-strong: #fffaf7;

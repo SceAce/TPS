@@ -1,5 +1,9 @@
 package com.tps
 
+/**
+ * 文件说明：Android 应用入口 Activity，负责挂载 Compose 根界面。
+ */
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent

@@ -1,5 +1,9 @@
 package com.tps.ui.admin
 
+/**
+ * 文件说明：管理员模块界面，负责后台管理页面的 Compose 展示与交互。
+ */
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -61,9 +65,9 @@ fun AdminProductsScreen(viewModel: AdminViewModel = hiltViewModel()) {
                         Text("商品ID：${report.productId}", style = MaterialTheme.typography.titleMedium)
                         Text("举报原因：${report.reason ?: "无"}", style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { viewModel.takeDownProduct(report.productId) },
+                            Button(onClick = { viewModel.handleReport(report.id, true) },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
-                                Text("下架")
+                                Text("处理并下架")
                             }
                         }
                     }

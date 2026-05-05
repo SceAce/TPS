@@ -1,5 +1,9 @@
 package com.tps.ui.profile
 
+/**
+ * 文件说明：个人中心界面，负责资料、收藏、历史、反馈等页面展示。
+ */
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells

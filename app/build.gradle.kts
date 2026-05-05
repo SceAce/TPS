@@ -1,3 +1,5 @@
+// 构建说明：Android 应用模块构建脚本，负责声明 SDK、依赖与调试地址注入。
+
 import java.io.File
 
 plugins {
@@ -18,12 +20,13 @@ fun escapeForJavaScript(value: String): String =
         .replace("\n", "\\n")
         .replace("\r", "\\r")
 
+// 这组参数由命令行 `-P` 注入，目的是让同一个 APK 同时兼容热点、USB 反向代理和模拟器三种调试场景。
 val hybridApiBaseUrlProvider = providers.gradleProperty("TPS_WEB_API_BASE_URL")
     .orElse("http://10.0.2.2:3000")
 val apiBaseUrlProvider = providers.gradleProperty("TPS_API_BASE_URL")
     .orElse("http://127.0.0.1:8080/")
 val apiFallbackBaseUrlsProvider = providers.gradleProperty("TPS_API_FALLBACK_BASE_URLS")
-    .orElse("http://172.168.10.204:8080/")
+    .orElse("http://10.0.2.2:8080/,http://127.0.0.1:8080/")
 val websocketUrlProvider = providers.gradleProperty("TPS_WS_URL")
     .orElse(apiBaseUrlProvider.map { apiBaseUrl ->
         apiBaseUrl
@@ -57,6 +60,7 @@ val hybridStaticFiles = listOf(
 )
 
 val syncHybridWebAssets by tasks.registering {
+    // 把 exchange 目录中的静态资源同步进 APK assets，保证移动端里内嵌的 Web 页面拿到同一套前端文件。
     inputs.files(hybridStaticFiles.map { hybridSourceDir.file(it) })
     inputs.property("webApiBaseUrl", hybridApiBaseUrlProvider)
     outputs.dir(hybridAssetsOutputDir)
@@ -113,6 +117,7 @@ android {
             )
         }
         debug {
+            // Debug 版同样写入地址常量，便于命令行构建出的 APK 直接给真机安装测试。
             buildConfigField("String", "BASE_URL", "\"${escapeForBuildConfig(apiBaseUrlProvider.get())}\"")
             buildConfigField("String", "FALLBACK_BASE_URLS", "\"${escapeForBuildConfig(apiFallbackBaseUrlsProvider.get())}\"")
             buildConfigField("String", "WS_URL", "\"${escapeForBuildConfig(websocketUrlProvider.get())}\"")

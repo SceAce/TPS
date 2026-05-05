@@ -1,5 +1,9 @@
 package com.tps.ui.product
 
+/**
+ * 文件说明：商品模块界面，负责商品浏览、详情或发布流程的 Compose 展示。
+ */
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -130,7 +134,8 @@ fun HomeProductListScreen(
         ) {
             item(span = StaggeredGridItemSpan.FullLine) {
                 HomeHero(
-                    productCount = uiState.products.size
+                    productCount = uiState.products.size,
+                    onRefresh = { viewModel.loadProducts() }
                 )
             }
 
@@ -196,7 +201,8 @@ fun HomeProductListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeHero(
-    productCount: Int
+    productCount: Int,
+    onRefresh: () -> Unit
 ) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(containerColor = Color.Transparent),
@@ -220,7 +226,7 @@ private fun HomeHero(
                         Text("像逛集市一样发现同校闲置", color = Color.White.copy(alpha = 0.86f), fontSize = 13.sp)
                     }
                     AssistChip(
-                        onClick = {},
+                        onClick = onRefresh,
                         label = { Text("${productCount} 件在逛") },
                         leadingIcon = { Icon(Icons.Default.Bolt, null, Modifier.size(16.dp)) },
                         colors = AssistChipDefaults.assistChipColors(

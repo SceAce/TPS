@@ -1,0 +1,38 @@
+@startuml
+' 图说明：本图展示系统与外部参与者、终端及基础设施之间的上下文关系。
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title TPS 校园二手交易系统上下文图
+
+actor "普通用户" as User
+actor "管理员" as Admin
+
+rectangle "TPS 校园二手交易系统" as TPS
+
+rectangle "安卓客户端" as App
+rectangle "后端服务" as Backend
+database "数据库" as DB
+collections "图片存储目录\nimg/" as Storage
+queue "实时消息通道" as WS
+
+User --> App : 浏览/发布/聊天/下单/评价
+Admin --> App : 用户管理/商品管理/订单管理
+
+App --> Backend : 接口调用
+App --> WS : 实时消息订阅与发送
+WS --> Backend : 消息鉴权与转发
+Backend --> DB : 用户/商品/订单/消息数据
+Backend --> Storage : 商品图片上传与访问
+
+note right of TPS
+系统边界包含：
+1. 安卓用户端
+2. 业务后端
+3. 数据与图片资源管理
+end note
+
+TPS -[hidden]- App
+TPS -[hidden]- Backend
+
+@enduml

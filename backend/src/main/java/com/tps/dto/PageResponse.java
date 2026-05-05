@@ -1,5 +1,9 @@
 package com.tps.dto;
 
+/**
+ * 文件说明：数据传输对象，负责定义接口入参与出参结构。
+ */
+
 import lombok.Data;
 import org.springframework.data.domain.Page;
 

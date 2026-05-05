@@ -1,5 +1,9 @@
 package com.tps.ui
 
+/**
+ * 文件说明：客户端导航总入口，负责定义登录、首页、商品和聊天等页面路由。
+ */
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +43,8 @@ fun TpsNavHost() {
     val navController = rememberNavController()
     val context = LocalContext.current.applicationContext
     val tokenManager = remember { TokenManager(context) }
+
+    // 启动时直接根据本地令牌决定首屏，减少每次打开应用都先闪一下登录页的问题。
     val startDestination = when {
         tokenManager.isLoggedIn() && tokenManager.isAdmin() -> Screen.AdminMain.route
         tokenManager.isLoggedIn() -> Screen.Main.route
@@ -77,6 +83,7 @@ fun TpsNavHost() {
                 },
                 onNavigateToChat = { conversationId ->
                     navController.navigate(Screen.Chat.createRoute(conversationId)) {
+                        // 同一会话重复点击时只保留一个聊天页，避免回退栈里出现多份相同页面。
                         launchSingleTop = true
                     }
                 },
