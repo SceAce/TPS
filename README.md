@@ -85,4 +85,4 @@ BASE_URL=http://127.0.0.1:8080 ./scripts/seed-test-data.sh
 - `start-backend.sh` 会自动推断局域网地址；如果推断错误，手动传 `TPS_LAN_IP=<IP>`。
 - 后端服务默认占用 `8080`；若端口已被占用，先结束旧进程再重启。
 - 聊天优先走 WebSocket，发送失败时客户端会退回 REST 兜底，但前提仍然是后端保持运行。
-- `manifest.webmanifest`、`package.json`、`db.json`、`package-lock.json` 这类严格 JSON 文件不能直接写注释，否则会破坏语法，因此本次未在这些文件内嵌注释。
+- Android 内嵌 Web 资源已迁入 `app/src/main/assets/www-source/`，根目录下的历史 `exchange/` 演示目录不再参与主线构建，可按需删除。

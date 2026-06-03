@@ -48,7 +48,7 @@ val websocketFallbackUrlsProvider = providers.gradleProperty("TPS_WS_FALLBACK_UR
             }
     })
 val hybridAssetsOutputDir = layout.buildDirectory.dir("generated/hybridWebAssets/main")
-val hybridSourceDir = rootProject.layout.projectDirectory.dir("exchange")
+val hybridSourceDir = layout.projectDirectory.dir("src/main/assets/www-source")
 val hybridStaticFiles = listOf(
     "index.html",
     "styles.css",
@@ -60,7 +60,7 @@ val hybridStaticFiles = listOf(
 )
 
 val syncHybridWebAssets by tasks.registering {
-    // 把 exchange 目录中的静态资源同步进 APK assets，保证移动端里内嵌的 Web 页面拿到同一套前端文件。
+    // 把内嵌 Web 静态资源同步进 APK assets，避免 Android 构建依赖根目录下的历史演示工程。
     inputs.files(hybridStaticFiles.map { hybridSourceDir.file(it) })
     inputs.property("webApiBaseUrl", hybridApiBaseUrlProvider)
     outputs.dir(hybridAssetsOutputDir)
