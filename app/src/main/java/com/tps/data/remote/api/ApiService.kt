@@ -59,6 +59,25 @@ interface ApiService {
     @PUT("api/products/{id}")
     suspend fun updateProduct(@Path("id") id: Long, @Body req: ProductRequest): ApiResponse<ProductDto>
 
+    @GET("api/products/{id}/comments")
+    suspend fun getProductComments(
+        @Path("id") id: Long,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): ApiResponse<PageResponse<ProductCommentDto>>
+
+    @POST("api/products/{id}/comments")
+    suspend fun createProductComment(
+        @Path("id") id: Long,
+        @Body req: ProductCommentRequest
+    ): ApiResponse<ProductCommentDto>
+
+    @DELETE("api/products/{productId}/comments/{commentId}")
+    suspend fun deleteProductComment(
+        @Path("productId") productId: Long,
+        @Path("commentId") commentId: Long
+    ): ApiResponse<Unit>
+
     @PATCH("api/products/{id}/status")
     suspend fun updateProductStatus(@Path("id") id: Long, @Query("status") status: String): ApiResponse<ProductDto>
 

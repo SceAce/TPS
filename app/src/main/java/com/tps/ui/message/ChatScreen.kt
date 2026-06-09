@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -33,7 +33,12 @@ import com.tps.data.remote.dto.ProductDto
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tps.data.remote.websocket.ChatMessage
 import com.tps.ui.theme.MarketBackground
+import com.tps.ui.theme.MarketGreen
+import com.tps.ui.theme.MarketInk
+import com.tps.ui.theme.MarketLine
+import com.tps.ui.theme.MarketMuted
 import com.tps.ui.theme.MarketOrange
+import com.tps.ui.theme.MarketSurfaceSoft
 import com.tps.util.resolveMediaUrl
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +56,6 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     var input by remember { mutableStateOf("") }
-    val quickPhrases = listOf("还在吗？", "能便宜点吗？", "在哪里面交？", "可以看看细节图吗？")
 
     LaunchedEffect(conversationId) {
         viewModel.init(conversationId)
@@ -69,16 +73,28 @@ fun ChatScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF7F7F7),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        containerColor = Color(0xFFF5F7F6),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            ChatInputBar(
+                input = input,
+                onInputChange = { input = it },
+                onSend = {
+                    if (input.isNotBlank()) {
+                        viewModel.sendMessage(input)
+                        input = ""
+                    }
+                }
+            )
+        }
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFFF7F7F7))) {
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFFF5F7F6))) {
             TopAppBar(
                 title = { Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF7F7F7))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF5F7F6))
             )
             product?.let { prod ->
                 Surface(
@@ -98,11 +114,11 @@ fun ChatScreen(
                             contentScale = ContentScale.Crop
                         )
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(prod.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(prod.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MarketInk)
                             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("¥${prod.price}", color = Color(0xFFE93600), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text("¥${prod.price}", color = Color(0xFFDF4A12), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 if (prod.status == "ON_SALE" || prod.status == "AVAILABLE") {
-                                    Text("在售", color = MarketOrange, fontSize = 10.sp, modifier = Modifier.background(Color(0xFFFFE1D2), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 2.dp))
+                                    Text("在售", color = MarketGreen, fontSize = 10.sp, modifier = Modifier.background(Color(0xFFE5F4EE), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp, vertical = 2.dp))
                                 } else {
                                     Text(prod.status, color = Color.Gray, fontSize = 10.sp)
                                 }
@@ -116,64 +132,62 @@ fun ChatScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(top = 12.dp, bottom = 16.dp)
+                    contentPadding = PaddingValues(top = 12.dp, bottom = 20.dp)
                 ) {
                     items(messages) { msg ->
                         MessageBubble(msg, viewModel.myUserId, product)
                     }
                 }
             }
-            Surface(
-                color = Color(0xFFF7F7F7),
-                tonalElevation = 8.dp,
-                modifier = Modifier.imePadding().navigationBarsPadding()
+        }
+    }
+}
+
+@Composable
+private fun ChatInputBar(
+    input: String,
+    onInputChange: (String) -> Unit,
+    onSend: () -> Unit
+) {
+    Surface(
+        color = Color(0xFFF5F7F6),
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp,
+        modifier = Modifier.imePadding()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilledIconButton(
+                onClick = {},
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MarketSurfaceSoft, contentColor = MarketInk)
             ) {
-                Column {
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(quickPhrases) { phrase ->
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.White,
-                                modifier = Modifier.clickable { input = phrase }
-                            ) {
-                                Text(phrase, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = Color(0xFF241A16))
-                            }
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = input,
-                            onValueChange = { input = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text("想跟Ta说点什么...") },
-                            shape = RoundedCornerShape(24.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent
-                            )
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        FilledIconButton(
-                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MarketOrange),
-                            onClick = {
-                                if (input.isNotBlank()) {
-                                    viewModel.sendMessage(input)
-                                    input = ""
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Default.Send, null)
-                        }
-                    }
-                }
+                Icon(Icons.Default.Add, null)
+            }
+            OutlinedTextField(
+                value = input,
+                onValueChange = onInputChange,
+                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                placeholder = { Text("问问成色、配件、交易时间", color = MarketMuted) },
+                shape = RoundedCornerShape(18.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = MarketLine,
+                    unfocusedBorderColor = MarketLine
+                )
+            )
+            Button(
+                onClick = onSend,
+                enabled = input.isNotBlank(),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
+            ) {
+                Text("发送", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -209,14 +223,14 @@ fun MessageBubble(msg: ChatMessage, myUserId: Long, product: ProductDto?) {
                     bottomStart = 18.dp,
                     bottomEnd = 18.dp
                 ),
-                color = if (isMe) Color(0xFFFFE1D2) else Color.White,
+                color = if (isMe) MarketGreen else Color.White,
                 tonalElevation = 1.dp,
                 modifier = Modifier.widthIn(max = 240.dp)
             ) {
                 Text(
                     text = msg.content,
                     modifier = Modifier.padding(12.dp),
-                    color = if (isMe) Color(0xFF7B361B) else Color(0xFF241A16),
+                    color = if (isMe) Color.White else MarketInk,
                     fontSize = 15.sp,
                     lineHeight = 22.sp
                 )
@@ -226,7 +240,7 @@ fun MessageBubble(msg: ChatMessage, myUserId: Long, product: ProductDto?) {
         if (isMe) {
             Spacer(Modifier.width(8.dp))
             Box(
-                modifier = Modifier.size(36.dp).clip(CircleShape).background(MarketOrange),
+                modifier = Modifier.size(36.dp).clip(CircleShape).background(MarketGreen),
                 contentAlignment = Alignment.Center
             ) {
                 Text(avatarLetter, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)

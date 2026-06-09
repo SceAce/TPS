@@ -10,20 +10,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFFFF5A1F),
+    primary = Color(0xFFFF6A1A),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFFFE1D2),
-    onPrimaryContainer = Color(0xFF8A2400),
-    secondary = Color(0xFF1F8A70),
-    secondaryContainer = Color(0xFFD9F2EA),
-    tertiary = Color(0xFFFFB000),
-    background = Color(0xFFFFF5ED),
+    primaryContainer = Color(0xFFFFEFE5),
+    onPrimaryContainer = Color(0xFF8A2A00),
+    secondary = Color(0xFF168765),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFE5F4EE),
+    onSecondaryContainer = Color(0xFF063E2E),
+    tertiary = Color(0xFFF5A400),
+    background = Color(0xFFF5F7F6),
+    onBackground = Color(0xFF1F2522),
     surface = Color.White,
-    surfaceVariant = Color(0xFFFFE9DC),
-    onSurface = Color(0xFF241A16),
-    onSurfaceVariant = Color(0xFF7B6257),
-    outline = Color(0xFFE7C8B8),
-    error = Color(0xFFD93025),
+    surfaceVariant = Color(0xFFF0F3F1),
+    onSurface = Color(0xFF1F2522),
+    onSurfaceVariant = Color(0xFF6E7973),
+    outline = Color(0xFFDCE5E0),
+    error = Color(0xFFD94832),
 )
 
 @Composable

@@ -31,7 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.tps.data.remote.dto.ProductCommentDto
 import com.tps.ui.theme.AppAsyncImage
+import com.tps.ui.theme.MarketBottomActions
+import com.tps.ui.theme.MarketGreen
+import com.tps.ui.theme.MarketInk
+import com.tps.ui.theme.MarketOrange
 import com.tps.util.resolveMediaUrl
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,7 +77,7 @@ fun ProductDetailScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFFFFF7F0),
+        containerColor = Color(0xFFF5F7F6),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             uiState.product?.let { product ->
@@ -193,59 +198,47 @@ fun ProductDetailScreen(
                             Button(onClick = {
                                 viewModel.createOrder(product.id)
                                 showBuyDialog = false
-                            }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5A1F))) { Text("确认下单") }
+                            }, colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)) { Text("确认下单") }
                         },
                         dismissButton = {
                             TextButton(onClick = { showBuyDialog = false }) { Text("取消") }
                         }
                     )
                 }
-                Surface(tonalElevation = 8.dp, color = Color.White) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (uiState.isOwner) {
-                        when (product.status) {
-                            "ON_SALE", "AVAILABLE" -> {
-                                OutlinedButton(
-                                    onClick = { viewModel.bumpProduct(product.id) },
-                                    modifier = Modifier.weight(1f)
-                                ) { Text("擦亮商品") }
-                                Button(
-                                    onClick = { viewModel.updateStatus(product.id, "OFF") },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5A1F))
-                                ) { Text("下架商品") }
-                            }
-                            "OFF" -> {
-                                Button(
-                                    onClick = { viewModel.updateStatus(product.id, "ON_SALE") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5A1F))
-                                ) { Text("重新上架") }
-                            }
-                            "SOLD" -> {
+                if (uiState.isOwner) {
+                    when (product.status) {
+                        "ON_SALE", "AVAILABLE" -> {
+                            MarketBottomActions(
+                                primaryText = "下架商品",
+                                onPrimaryClick = { viewModel.updateStatus(product.id, "OFF") },
+                                secondaryText = "擦亮商品",
+                                onSecondaryClick = { viewModel.bumpProduct(product.id) }
+                            )
+                        }
+                        "OFF" -> {
+                            MarketBottomActions(
+                                primaryText = "重新上架",
+                                onPrimaryClick = { viewModel.updateStatus(product.id, "ON_SALE") }
+                            )
+                        }
+                        "SOLD" -> {
+                            Surface(tonalElevation = 8.dp, color = Color.White) {
                                 Text(
                                     text = "商品已成交，不能重新上架",
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-                    } else {
-                        OutlinedButton(
-                            onClick = { viewModel.startChat(product.userId, product.id) },
-                            modifier = Modifier.weight(1f)
-                        ) { Text("联系卖家") }
-                        Button(
-                            onClick = { showBuyDialog = true },
-                            modifier = Modifier.weight(1f),
-                            enabled = product.status == "ON_SALE" || product.status == "AVAILABLE",
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5A1F))
-                        ) { Text("立即购买") }
                     }
-                }
+                } else {
+                    MarketBottomActions(
+                        primaryText = "立即购买",
+                        onPrimaryClick = { showBuyDialog = true },
+                        primaryEnabled = product.status == "ON_SALE" || product.status == "AVAILABLE",
+                        secondaryText = "联系卖家",
+                        onSecondaryClick = { viewModel.startChat(product.userId, product.id) }
+                    )
                 }
             }
         }
@@ -269,7 +262,7 @@ fun ProductDetailScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color(0xFFF7F7F7))
+                                    .background(Color(0xFFF5F7F6))
                                     .clickable { showFullScreenImage = product.imageUrls[page] }
                             ) {
                                 AppAsyncImage(
@@ -335,9 +328,9 @@ fun ProductDetailScreen(
                     }
                     Card(
                         modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
-                        shape = RoundedCornerShape(26.dp),
+                        shape = RoundedCornerShape(17.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(verticalAlignment = Alignment.Bottom) {
@@ -346,9 +339,9 @@ fun ProductDetailScreen(
                                 val integerPart = parts[0]
                                 val decimalPart = if (parts.size > 1 && parts[1] != "0") ".${parts[1]}" else ""
 
-                                Text("¥", fontSize = 16.sp, color = Color(0xFFE93600), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
-                                Text(integerPart, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFE93600))
-                                Text(decimalPart, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFE93600), modifier = Modifier.padding(bottom = 4.dp))
+                                Text("¥", fontSize = 16.sp, color = Color(0xFFDF4A12), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
+                                Text(integerPart, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFDF4A12))
+                                Text(decimalPart, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFDF4A12), modifier = Modifier.padding(bottom = 4.dp))
                                 Spacer(Modifier.weight(1f))
                                 Text(
                                     when (product.status) {
@@ -357,12 +350,12 @@ fun ProductDetailScreen(
                                         "SOLD" -> "已售出"
                                         else -> product.status
                                     },
-                                    color = Color(0xFFFF5A1F),
+                                    color = MarketGreen,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.clip(CircleShape).background(Color(0xFFFFE1D2)).padding(horizontal = 10.dp, vertical = 5.dp)
+                                    modifier = Modifier.clip(CircleShape).background(Color(0xFFE5F4EE)).padding(horizontal = 10.dp, vertical = 5.dp)
                                 )
                             }
-                            Text(product.title, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF241A16), lineHeight = 27.sp)
+                            Text(product.title, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, color = MarketInk, lineHeight = 27.sp)
                             product.description?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 21.sp) }
                             if (uiState.isOwner && product.status == "OFF" && !product.takedownReason.isNullOrBlank()) {
                                 Text(
@@ -375,7 +368,7 @@ fun ProductDetailScreen(
                                         .padding(12.dp)
                                 )
                             }
-                            HorizontalDivider(color = Color(0xFFFFE1D2))
+                            HorizontalDivider(color = Color(0xFFDCE5E0))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 InfoChip("${product.category ?: "其他"}")
                                 InfoChip("成色 ${product.condition ?: "未标注"}")
@@ -385,13 +378,13 @@ fun ProductDetailScreen(
                     }
                     Card(
                         modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = RoundedCornerShape(17.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier.size(46.dp).clip(CircleShape).background(
-                                    Brush.linearGradient(listOf(Color(0xFFFFB000), Color(0xFFFF5A1F)))
+                                    Brush.linearGradient(listOf(MarketGreen, MarketOrange))
                                 ),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -405,12 +398,213 @@ fun ProductDetailScreen(
                                     fontSize = 12.sp
                                 )
                             }
-                            Icon(Icons.Default.Verified, null, tint = Color(0xFF1F8A70))
+                            Icon(Icons.Default.Verified, null, tint = MarketGreen)
+                        }
+                    }
+                    ProductCommentsCard(
+                        comments = uiState.comments,
+                        loading = uiState.commentsLoading,
+                        submitting = uiState.commentSubmitting,
+                        onSubmit = viewModel::submitComment,
+                        onDelete = viewModel::deleteComment,
+                        onRefresh = viewModel::refreshComments,
+                        modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductCommentsCard(
+    comments: List<ProductCommentDto>,
+    loading: Boolean,
+    submitting: Boolean,
+    onSubmit: (String) -> Unit,
+    onDelete: (Long) -> Unit,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showCommentSheet by remember { mutableStateOf(false) }
+    var commentText by remember { mutableStateOf("") }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    if (showCommentSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showCommentSheet = false
+                commentText = ""
+            },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("添加评论", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MarketInk)
+                OutlinedTextField(
+                    value = commentText,
+                    onValueChange = { commentText = it.take(500) },
+                    label = { Text("评论内容") },
+                    placeholder = { Text("询问尺寸、成色、交易方式等") },
+                    minLines = 4,
+                    maxLines = 6,
+                    modifier = Modifier.fillMaxWidth(),
+                    supportingText = { Text("${commentText.length}/500") }
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            showCommentSheet = false
+                            commentText = ""
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("取消")
+                    }
+                    Button(
+                        onClick = {
+                            onSubmit(commentText)
+                            showCommentSheet = false
+                            commentText = ""
+                        },
+                        enabled = commentText.isNotBlank() && !submitting,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MarketGreen)
+                    ) {
+                        if (submitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                        } else {
+                            Text("发布")
                         }
                     }
                 }
             }
         }
+    }
+
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(17.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("商品评论", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MarketInk)
+                    Text("向卖家提问，或查看其他同学的留言", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = onRefresh, enabled = !loading) {
+                    Icon(Icons.Default.Refresh, contentDescription = "刷新评论", tint = MarketGreen)
+                }
+            }
+
+            when {
+                loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = MarketGreen)
+                    }
+                }
+                comments.isEmpty() -> {
+                    Text(
+                        text = "还没有评论，先问问商品细节。",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF5F7F6))
+                            .padding(14.dp)
+                    )
+                }
+                else -> {
+                    comments.take(20).forEachIndexed { index, comment ->
+                        ProductCommentRow(comment = comment, onDelete = onDelete)
+                        if (index < comments.take(20).lastIndex) {
+                            HorizontalDivider(color = Color(0xFFE8EEE9))
+                        }
+                    }
+                }
+            }
+
+            Button(
+                onClick = { showCommentSheet = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MarketGreen)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("添加评论")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductCommentRow(
+    comment: ProductCommentDto,
+    onDelete: (Long) -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(MarketGreen, MarketOrange))),
+            contentAlignment = Alignment.Center
+        ) {
+            val nickname = comment.userNickname?.takeIf { it.isNotBlank() } ?: "同学"
+            Text(nickname.take(1), color = Color.White, fontWeight = FontWeight.Bold)
+        }
+        Column(modifier = Modifier.padding(start = 10.dp).weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = comment.userNickname?.takeIf { it.isNotBlank() } ?: "匿名同学",
+                    fontWeight = FontWeight.Bold,
+                    color = MarketInk,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(formatCommentTime(comment.createdAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text(comment.content, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
+        }
+        if (comment.mine) {
+            IconButton(onClick = { onDelete(comment.id) }, modifier = Modifier.size(34.dp)) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "删除评论",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun formatCommentTime(value: String?): String {
+    if (value.isNullOrBlank()) return ""
+    val normalized = value.replace("T", " ")
+    return when {
+        normalized.length >= 16 -> normalized.substring(0, 16)
+        else -> normalized
     }
 }
 
@@ -419,7 +613,7 @@ private fun InfoChip(text: String) {
     Text(
         text = text,
         fontSize = 12.sp,
-        color = Color(0xFF7B4A37),
-        modifier = Modifier.clip(CircleShape).background(Color(0xFFFFF0E6)).padding(horizontal = 10.dp, vertical = 6.dp)
+        color = MarketGreen,
+        modifier = Modifier.clip(CircleShape).background(Color(0xFFE5F4EE)).padding(horizontal = 10.dp, vertical = 6.dp)
     )
 }

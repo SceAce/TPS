@@ -124,6 +124,71 @@ class BackendIntegrationTest {
     }
 
     @Test
+    void productCommentsArePublicMineAwareAndSeparateFromReviewCredit() throws Exception {
+        String sellerToken = register("13800138130", "seller").at("/data/token").asText();
+        JsonNode commenter = register("13800138131", "commenter");
+        String commenterToken = commenter.at("/data/token").asText();
+        String outsiderToken = register("13800138132", "outsider").at("/data/token").asText();
+        Long commenterId = commenter.at("/data/userId").asLong();
+        Long sellerId = userRepository.findByPhone("13800138130").orElseThrow().getId();
+        Long productId = createProduct(sellerToken, null);
+
+        mockMvc.perform(get("/api/products/{productId}/comments", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content", hasSize(0)));
+
+        mockMvc.perform(post("/api/products/{productId}/comments", productId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("content", "  Interested in this phone  "))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401));
+
+        String commentBody = mockMvc.perform(post("/api/products/{productId}/comments", productId)
+                        .header("Authorization", "Bearer " + commenterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("content", "  Interested in this phone  "))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.productId").value(productId))
+                .andExpect(jsonPath("$.data.userId").value(commenterId))
+                .andExpect(jsonPath("$.data.userNickname").value("commenter"))
+                .andExpect(jsonPath("$.data.content").value("Interested in this phone"))
+                .andExpect(jsonPath("$.data.status").value("VISIBLE"))
+                .andExpect(jsonPath("$.data.mine").value(true))
+                .andReturn().getResponse().getContentAsString();
+        Long commentId = objectMapper.readTree(commentBody).at("/data/id").asLong();
+
+        mockMvc.perform(get("/api/products/{productId}/comments", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].id").value(commentId))
+                .andExpect(jsonPath("$.data.content[0].mine").value(false));
+
+        mockMvc.perform(get("/api/products/{productId}/comments", productId)
+                        .header("Authorization", "Bearer " + commenterToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].mine").value(true));
+
+        mockMvc.perform(get("/api/users/{id}", sellerId).header("Authorization", "Bearer " + commenterToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.creditScore").value(100))
+                .andExpect(jsonPath("$.data.reviewCount").value(0));
+
+        mockMvc.perform(delete("/api/products/{productId}/comments/{commentId}", productId, commentId)
+                        .header("Authorization", "Bearer " + outsiderToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("无权操作"));
+
+        mockMvc.perform(delete("/api/products/{productId}/comments/{commentId}", productId, commentId)
+                        .header("Authorization", "Bearer " + sellerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        mockMvc.perform(get("/api/products/{productId}/comments", productId)
+                        .header("Authorization", "Bearer " + commenterToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content", hasSize(0)));
+    }
+
+    @Test
     void orderFlowSupportsTradeReviewAndPreventsDuplicateActiveOrders() throws Exception {
         String sellerToken = register("13800138002", "seller").at("/data/token").asText();
         String buyerToken = register("13800138003", "buyer").at("/data/token").asText();

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TPS UI Preview</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="workspace">
+      <aside class="panel">
+        <p class="eyebrow">TPS UI Preview</p>
+        <h1>校园二手交易系统 UI 原型</h1>
+        <p class="summary">
+          独立假数据预览，不连接真实 Android 和后端。用于先确认整体视觉、首页刷新动画、底部导航和主页面风格。
+        </p>
+
+        <section class="controls" aria-label="预览控制">
+          <button class="control active" data-mode="idle">普通状态</button>
+          <button class="control" data-mode="pulling">下拉中</button>
+          <button class="control" data-mode="refreshing">刷新中</button>
+          <button class="control" data-mode="keyboard">键盘弹出</button>
+        </section>
+
+        <section class="controls page-jumps" aria-label="页面跳转">
+          <button class="control jump" data-target="screen-home">首页</button>
+          <button class="control jump" data-target="screen-detail">商品详情</button>
+          <button class="control jump" data-target="screen-chat">聊天详情</button>
+          <button class="control jump" data-target="screen-publish">发布商品</button>
+        </section>
+
+        <section class="notes">
+          <h2>设计约束</h2>
+          <ul>
+            <li>橙色只做主行动，不铺满背景。</li>
+            <li>绿色用于信用、安全、成功。</li>
+            <li>卡片圆角收敛，信息层级更清楚。</li>
+            <li>首页顶部小圆圈随下拉进度转动，刷新时持续旋转。</li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="phone-shell" aria-label="手机预览">
+        <div class="phone">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>TPS</span>
+          </div>
+
+          <section class="screen active" id="screen-home">
+            <header class="top">
+              <label class="search">
+                <span class="search-icon">⌕</span>
+                <input value="" placeholder="搜手机、教材、耳机、自行车" />
+              </label>
+              <button class="refresh-dot" aria-label="刷新">
+                <span class="ring"></span>
+              </button>
+            </header>
+
+            <div class="refresh-hint">松手刷新校园好物</div>
+
+            <section class="hero">
+              <div>
+                <p class="hero-kicker">同校面交 · 信用优先</p>
+                <h2>今天看看谁在出闲置</h2>
+                <p>24 件新发布，3 件来自你的收藏分类。</p>
+              </div>
+              <button>去发布</button>
+            </section>
+
+            <nav class="category-row" aria-label="分类">
+              <button class="selected">全部</button>
+              <button>数码</button>
+              <button>教材</button>
+              <button>生活</button>
+              <button>运动</button>
+            </nav>
+
+            <section class="feed-head">
+              <div>
+                <h3>猜你喜欢</h3>
+                <p>按热度、成色和校内距离排序</p>
+              </div>
+              <span>128 件</span>
+            </section>
+
+            <section class="goods-grid">
+              <article class="goods-card tall nav-card" data-target="screen-detail">
+                <div class="image image-1"><span>9成新</span></div>
+                <h4>iPad Air 5 256G 深空灰</h4>
+                <p class="meta">数码 · 图书馆北门</p>
+                <div class="price-row"><strong>¥2899</strong><em>信用 96</em></div>
+              </article>
+              <article class="goods-card">
+                <div class="image image-2"><span>教材</span></div>
+                <h4>考研数学全套讲义和真题</h4>
+                <p class="meta">书籍 · 三号教学楼</p>
+                <div class="price-row"><strong>¥68</strong><em>同校</em></div>
+              </article>
+              <article class="goods-card">
+                <div class="image image-3"><span>自提</span></div>
+                <h4>小米降噪耳机，配件齐全</h4>
+                <p class="meta">数码 · 东区宿舍</p>
+                <div class="price-row"><strong>¥129</strong><em>急出</em></div>
+              </article>
+              <article class="goods-card tall">
+                <div class="image image-4"><span>运动</span></div>
+                <h4>捷安特通勤自行车</h4>
+                <p class="meta">运动 · 操场门口</p>
+                <div class="price-row"><strong>¥420</strong><em>可议</em></div>
+              </article>
+            </section>
+          </section>
+
+          <section class="screen" id="screen-messages">
+            <header class="page-title">
+              <h2>交易消息</h2>
+              <p>按商品聚合沟通记录</p>
+            </header>
+            <article class="list-card nav-card" data-target="screen-chat">
+              <div class="avatar">陈</div>
+              <div>
+                <h3>iPad Air 5 256G</h3>
+                <p>今晚 7 点图书馆北门可以看机吗？</p>
+              </div>
+              <span class="badge">2</span>
+            </article>
+            <article class="list-card">
+              <div class="avatar green">李</div>
+              <div>
+                <h3>考研数学讲义</h3>
+                <p>可以便宜一点吗，我今天自取。</p>
+              </div>
+            </article>
+          </section>
+
+          <section class="screen" id="screen-orders">
+            <header class="page-title">
+              <h2>我的订单</h2>
+              <p>买到的和卖出的集中管理</p>
+            </header>
+            <div class="segmented">
+              <button class="selected">我买的</button>
+              <button>我卖的</button>
+            </div>
+            <article class="order-card">
+              <div class="order-top">
+                <h3>小米降噪耳机</h3>
+                <span class="pill warn">待付款</span>
+              </div>
+              <strong>¥129.00</strong>
+              <p>订单号：202606090012</p>
+              <div class="actions">
+                <button>立即付款</button>
+                <button class="ghost">取消</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="screen" id="screen-profile">
+            <header class="profile-head">
+              <div class="profile-avatar">林</div>
+              <div>
+                <h2>林同学</h2>
+                <p>信用分 98 · 收到评价 12 条</p>
+              </div>
+            </header>
+            <section class="stats">
+              <div><strong>8</strong><span>发布</span></div>
+              <div><strong>3</strong><span>卖出</span></div>
+              <div><strong>5</strong><span>买到</span></div>
+            </section>
+            <article class="menu-card">浏览历史 <span>›</span></article>
+            <article class="menu-card">收藏夹 <span>›</span></article>
+            <article class="menu-card">客服/反馈 <span>›</span></article>
+          </section>
+
+          <section class="screen detail-screen" id="screen-detail">
+            <header class="detail-media image-1">
+              <button class="icon-back nav-card" data-target="screen-home">‹</button>
+              <span class="media-count">1/5</span>
+            </header>
+
+            <article class="detail-card">
+              <div class="detail-price-row">
+                <strong>¥2899</strong>
+                <span class="pill good">信用优先</span>
+              </div>
+              <h2>iPad Air 5 256G 深空灰，原装笔可一起出</h2>
+              <p>购于去年 10 月，边框轻微使用痕迹，屏幕无划痕。盒子、充电器、保护壳都在，支持当面验机。</p>
+            </article>
+
+            <article class="seller-card">
+              <div class="avatar green">陈</div>
+              <div>
+                <h3>陈同学</h3>
+                <p>信用分 96 · 已完成 18 单 · 平均回复 8 分钟</p>
+              </div>
+              <span>›</span>
+            </article>
+
+            <section class="info-grid">
+              <div><span>成色</span><strong>9成新</strong></div>
+              <div><span>地点</span><strong>图书馆北门</strong></div>
+              <div><span>分类</span><strong>数码</strong></div>
+              <div><span>交易</span><strong>校内面交</strong></div>
+            </section>
+
+            <article class="section-card">
+              <h3>交易提醒</h3>
+              <p>建议在校内公共区域面交，贵重数码商品当面确认序列号、外观和基础功能。</p>
+            </article>
+
+            <div class="detail-actions">
+              <button class="ghost nav-card" data-target="screen-chat">联系卖家</button>
+              <button>立即购买</button>
+            </div>
+          </section>
+
+          <section class="screen chat-screen" id="screen-chat">
+            <header class="chat-top">
+              <button class="icon-back nav-card" data-target="screen-messages">‹</button>
+              <div>
+                <h2>陈同学</h2>
+                <p>信用分 96 · 在线</p>
+              </div>
+              <button class="mini-more">⋯</button>
+            </header>
+
+            <article class="chat-product nav-card" data-target="screen-detail">
+              <div class="mini-image image-1"></div>
+              <div>
+                <h3>iPad Air 5 256G</h3>
+                <p>¥2899 · 图书馆北门</p>
+              </div>
+              <span>看详情</span>
+            </article>
+
+            <section class="chat-list">
+              <div class="time-chip">今天 18:42</div>
+              <div class="bubble other">
+                你好，iPad 还在吗？电池健康大概怎么样？
+              </div>
+              <div class="bubble mine">
+                还在，平时主要记笔记和看 PDF，续航正常。可以当面验机。
+              </div>
+              <div class="bubble other">
+                今晚 7 点图书馆北门可以看机吗？
+              </div>
+              <div class="bubble mine">
+                可以。我会带盒子、充电器和保护壳。
+              </div>
+              <div class="deal-strip">
+                <span>建议面交价</span>
+                <strong>¥2800</strong>
+                <button>发起议价</button>
+              </div>
+            </section>
+
+          </section>
+
+          <footer class="chat-input">
+            <button>＋</button>
+            <input placeholder="问问成色、配件、交易时间" />
+            <button class="send">发送</button>
+          </footer>
+
+          <section class="screen publish-screen" id="screen-publish">
+            <header class="plain-top">
+              <button class="icon-back nav-card" data-target="screen-home">‹</button>
+              <div>
+                <h2>发布闲置</h2>
+                <p>写清成色和交易地点，减少反复沟通</p>
+              </div>
+            </header>
+
+            <section class="upload-card">
+              <button class="upload-main">＋</button>
+              <div>
+                <h3>添加商品图片</h3>
+                <p>最多 9 张，首图建议拍清主体和瑕疵</p>
+              </div>
+            </section>
+
+            <article class="form-card">
+              <label>
+                <span>标题</span>
+                <input value="iPad Air 5 256G 深空灰" />
+              </label>
+              <label>
+                <span>价格</span>
+                <input value="2899" />
+              </label>
+              <label>
+                <span>描述</span>
+                <textarea>屏幕无划痕，边框轻微使用痕迹，盒子和充电器都在，支持当面验机。</textarea>
+              </label>
+            </article>
+
+            <article class="form-card">
+              <h3>分类与成色</h3>
+              <div class="chip-wrap">
+                <button class="selected">数码</button>
+                <button>书籍</button>
+                <button>生活</button>
+                <button>运动</button>
+              </div>
+              <div class="chip-wrap">
+                <button>全新</button>
+                <button class="selected">9成新</button>
+                <button>成色好</button>
+                <button>有痕迹</button>
+              </div>
+            </article>
+
+            <article class="form-card">
+              <label>
+                <span>交易地点</span>
+                <input value="图书馆北门" />
+              </label>
+              <div class="safe-note">建议选择校内公共区域，不填写宿舍门牌等隐私信息。</div>
+            </article>
+
+          </section>
+
+          <div class="publish-actions">
+            <button class="ghost">存草稿</button>
+            <button>立即发布</button>
+          </div>
+
+          <div class="keyboard-preview" aria-hidden="true">
+            <div class="keyboard-row"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="keyboard-row"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="keyboard-row"><span></span><span></span><span class="space"></span><span></span></div>
+          </div>
+
+          <nav class="bottom-nav" aria-label="底部导航">
+            <button class="tab active" data-target="screen-home">⌂<span>首页</span></button>
+            <button class="tab" data-target="screen-messages">✉<span>消息</span></button>
+            <button class="fab nav-card" data-target="screen-publish" aria-label="发布">＋</button>
+            <button class="tab" data-target="screen-orders">▣<span>订单</span></button>
+            <button class="tab" data-target="screen-profile">◉<span>我的</span></button>
+          </nav>
+        </div>
+      </section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -5,7 +5,9 @@ package com.tps.ui.home
  */
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,6 +24,8 @@ import com.tps.ui.message.MessageListScreen
 import com.tps.ui.order.MyOrdersScreen
 import com.tps.ui.product.HomeProductListScreen
 import com.tps.ui.profile.MyProfileScreen
+import com.tps.ui.theme.MarketGreen
+import com.tps.ui.theme.MarketOrange
 
 @Composable
 fun MainScreen(
@@ -48,9 +52,9 @@ fun MainScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToPublish,
-                containerColor = Color(0xFFFF5A1F),
+                containerColor = MarketOrange,
                 contentColor = Color.White,
-                shape = androidx.compose.foundation.shape.CircleShape
+                shape = RoundedCornerShape(19.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "发布", modifier = Modifier.padding(4.dp))
             }
@@ -58,7 +62,7 @@ fun MainScreen(
         floatingActionButtonPosition = FabPosition.Center,
         bottomBar = {
             NavigationBar(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                modifier = Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp),
                 containerColor = Color.White.copy(alpha = 0.94f),
                 tonalElevation = 10.dp,
             ) {
@@ -68,6 +72,13 @@ fun MainScreen(
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
                         label = { Text(tab.label) },
                         selected = currentRoute == tab.route || (tab.route == "orders" && currentRoute?.startsWith("orders") == true),
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MarketGreen,
+                            selectedTextColor = MarketGreen,
+                            indicatorColor = Color(0xFFE5F4EE),
+                            unselectedIconColor = Color(0xFF6E7973),
+                            unselectedTextColor = Color(0xFF6E7973)
+                        ),
                         onClick = {
                             navController.navigate(tab.route) {
                                 popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -86,7 +97,7 @@ fun MainScreen(
             modifier = Modifier
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFFFFF0E6), Color(0xFFFFF8F1), Color(0xFFF7F7F7))
+                        listOf(Color(0xFFF5F7F6), Color(0xFFFAFBFA), Color(0xFFEEF2F0))
                     )
                 )
                 .padding(innerPadding)

@@ -7,12 +7,15 @@ package com.tps.ui.product
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService
+import com.tps.data.remote.dto.ProductCommentDto
+import com.tps.data.remote.dto.ProductCommentRequest
 import com.tps.data.remote.dto.ProductDto
 import com.tps.util.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 data class ProductDetailUiState(
@@ -25,7 +28,10 @@ data class ProductDetailUiState(
     val navigateToChatId: Long? = null,
     val isOwner: Boolean = false,
     val deleted: Boolean = false,
-    val actionSuccess: String? = null
+    val actionSuccess: String? = null,
+    val comments: List<ProductCommentDto> = emptyList(),
+    val commentsLoading: Boolean = false,
+    val commentSubmitting: Boolean = false
 )
 
 @HiltViewModel
@@ -50,11 +56,93 @@ class ProductDetailViewModel @Inject constructor(
                     product = product,
                     isLoading = false,
                     isFavorite = product?.favorited == true,
-                    isOwner = isOwner
+                    isOwner = isOwner,
+                    comments = emptyList(),
+                    commentsLoading = product != null
                 )
+                product?.let { loadComments(it.id, showError = true) }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
             }
+        }
+    }
+
+    fun refreshComments() {
+        val productId = _uiState.value.product?.id ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(commentsLoading = true)
+            loadComments(productId, showError = true)
+        }
+    }
+
+    fun submitComment(content: String) {
+        val productId = _uiState.value.product?.id ?: return
+        val trimmed = content.trim()
+        if (trimmed.isBlank()) {
+            _uiState.value = _uiState.value.copy(error = "请输入评论内容")
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(commentSubmitting = true)
+            try {
+                val resp = apiService.createProductComment(
+                    productId,
+                    ProductCommentRequest(content = trimmed.take(500))
+                )
+                val createdComment = resp.data
+                _uiState.value = if (createdComment != null) {
+                    _uiState.value.copy(
+                        comments = listOf(createdComment) + _uiState.value.comments.filter { it.id != createdComment.id },
+                        commentSubmitting = false,
+                        actionSuccess = "评论已发布"
+                    )
+                } else {
+                    _uiState.value.copy(commentSubmitting = false, error = resp.message)
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    commentSubmitting = false,
+                    error = commentErrorMessage(e, "评论发布失败")
+                )
+            }
+        }
+    }
+
+    fun deleteComment(commentId: Long) {
+        val productId = _uiState.value.product?.id ?: return
+        viewModelScope.launch {
+            try {
+                apiService.deleteProductComment(productId, commentId)
+                _uiState.value = _uiState.value.copy(
+                    comments = _uiState.value.comments.filterNot { it.id == commentId },
+                    actionSuccess = "评论已删除"
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = commentErrorMessage(e, "删除评论失败"))
+            }
+        }
+    }
+
+    private suspend fun loadComments(productId: Long, showError: Boolean) {
+        try {
+            val resp = apiService.getProductComments(productId, page = 0, size = 20)
+            _uiState.value = _uiState.value.copy(
+                comments = resp.data?.content ?: emptyList(),
+                commentsLoading = false
+            )
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                commentsLoading = false,
+                error = if (showError) "评论加载失败" else _uiState.value.error
+            )
+        }
+    }
+
+    private fun commentErrorMessage(error: Exception, fallback: String): String {
+        return if (error is HttpException && error.code() == 401) {
+            "请先登录后再评论"
+        } else {
+            error.message ?: fallback
         }
     }
 

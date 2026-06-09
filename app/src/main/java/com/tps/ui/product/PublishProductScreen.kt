@@ -33,8 +33,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketCard
-import com.tps.ui.theme.MarketHeroCard
+import com.tps.ui.theme.MarketBottomActions
+import com.tps.ui.theme.MarketGreen
+import com.tps.ui.theme.MarketInk
+import com.tps.ui.theme.MarketMuted
 import com.tps.ui.theme.MarketOrange
+import com.tps.ui.theme.MarketSurfaceSoft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,30 +80,25 @@ fun PublishProductScreen(onBack: () -> Unit, viewModel: PublishProductViewModel 
             )
         },
         bottomBar = {
-            Surface(color = Color.White, tonalElevation = 8.dp) {
-            Box(Modifier.fillMaxWidth().padding(12.dp)) {
-                Button(
-                    onClick = { viewModel.publish(title.trim(), description.trim(), priceValue ?: 0.0, category, condition, location.trim()) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !uiState.isLoading && canPublish,
-                    colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
-                ) {
-                    if (uiState.isLoading) CircularProgressIndicator(Modifier.size(18.dp))
-                    else Text("立即发布，开始曝光")
-                }
-            }
-            }
+            MarketBottomActions(
+                primaryText = if (uiState.isLoading) "发布中" else "立即发布",
+                onPrimaryClick = { viewModel.publish(title.trim(), description.trim(), priceValue ?: 0.0, category, condition, location.trim()) },
+                primaryEnabled = !uiState.isLoading && canPublish,
+                secondaryText = "存草稿",
+                onSecondaryClick = {},
+                modifier = Modifier.imePadding()
+            )
         }
     ) { padding ->
         MarketBackground {
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 88.dp).verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 18.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            MarketHeroCard("卖掉闲置", "上传真实图片、写清成色，校内同学更愿意下单。")
             MarketCard {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("商品图片（最多9张）", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("商品图片", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MarketInk)
+            Text("最多 9 张，首图建议拍清主体和瑕疵", color = MarketMuted, style = MaterialTheme.typography.bodySmall)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(uiState.selectedImages) { uri ->
                     Box {
@@ -142,26 +141,55 @@ fun PublishProductScreen(onBack: () -> Unit, viewModel: PublishProductViewModel 
                 shape = RoundedCornerShape(18.dp),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
             )
-            OutlinedTextField(value = location, onValueChange = { location = it }, label = { Text("交易地点，如 图书馆门口") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp))
             }
             }
 
             MarketCard {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("分类", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("分类", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MarketInk)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(categories) { cat ->
-                    FilterChip(selected = category == cat, onClick = { category = cat }, label = { Text(cat) })
+                    FilterChip(
+                        selected = category == cat,
+                        onClick = { category = cat },
+                        label = { Text(cat) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFFE5F4EE),
+                            selectedLabelColor = MarketGreen
+                        )
+                    )
                 }
             }
 
-            Text("成色", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("成色", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MarketInk)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(conditions) { (value, label) ->
-                    FilterChip(selected = condition == value, onClick = { condition = value }, label = { Text(label) })
+                    FilterChip(
+                        selected = condition == value,
+                        onClick = { condition = value },
+                        label = { Text(label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFFE5F4EE),
+                            selectedLabelColor = MarketGreen
+                        )
+                    )
                 }
             }
             }
+            }
+
+            MarketCard {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("交易地点", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MarketInk)
+                    OutlinedTextField(
+                        value = location,
+                        onValueChange = { location = it },
+                        label = { Text("如 图书馆北门") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp)
+                    )
+                    Text("建议选择校内公共区域，不填写宿舍门牌等隐私信息。", color = MarketMuted, style = MaterialTheme.typography.bodySmall)
+                }
             }
 
             if (uiState.error != null) Text(uiState.error!!, color = MaterialTheme.colorScheme.error)

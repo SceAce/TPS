@@ -5,7 +5,12 @@ package com.tps.ui.product
  */
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +64,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -71,20 +77,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.data.remote.dto.ProductDto
+import com.tps.ui.theme.MarketGreen
+import com.tps.ui.theme.MarketInk
+import com.tps.ui.theme.MarketLine
+import com.tps.ui.theme.MarketMuted
+import com.tps.ui.theme.MarketOrange
+import com.tps.ui.theme.MarketSurfaceSoft
 import com.tps.util.resolveMediaUrl
+import kotlinx.coroutines.delay
 
 private val categoryTabs = listOf("全部", "数码", "教材", "生活", "运动", "服饰")
 
@@ -97,45 +114,103 @@ fun HomeProductListScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("全部") }
+    var pullDistance by remember { mutableStateOf(0f) }
+    var refreshPinned by remember { mutableStateOf(false) }
+    var refreshStarted by remember { mutableStateOf(false) }
+    val refreshThreshold = 96f
+    val pullProgress = (pullDistance / refreshThreshold).coerceIn(0f, 1f)
+    val isPullRefreshing = refreshPinned && uiState.isLoading
+    val refreshIndicatorVisible = pullProgress > 0f || refreshPinned || isPullRefreshing
+    val refreshLabel = when {
+        refreshPinned || isPullRefreshing -> "正在刷新校园好物"
+        pullProgress >= 1f -> "松手刷新"
+        else -> "继续下拉刷新"
+    }
+    val triggerRefresh = {
+        if (!uiState.isLoading && !refreshPinned) {
+            refreshPinned = true
+            refreshStarted = true
+            pullDistance = refreshThreshold
+            viewModel.loadProducts()
+        }
+    }
+
+    LaunchedEffect(refreshPinned, uiState.isLoading) {
+        if (refreshPinned && uiState.isLoading) {
+            refreshStarted = true
+        }
+        if (refreshPinned && refreshStarted && !uiState.isLoading) {
+            delay(260)
+            refreshPinned = false
+            refreshStarted = false
+            pullDistance = 0f
+        }
+    }
+
+    val refreshConnection = remember(uiState.isLoading, refreshPinned) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                if (available.y < 0 && pullDistance > 0f && !refreshPinned) {
+                    pullDistance = (pullDistance + available.y).coerceAtLeast(0f)
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: androidx.compose.ui.geometry.Offset,
+                available: androidx.compose.ui.geometry.Offset,
+                source: NestedScrollSource
+            ): androidx.compose.ui.geometry.Offset {
+                if (available.y > 0 && !uiState.isLoading && !refreshPinned) {
+                    pullDistance = (pullDistance + available.y * 0.45f).coerceAtMost(refreshThreshold)
+                }
+                return androidx.compose.ui.geometry.Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (pullDistance >= refreshThreshold && !uiState.isLoading && !refreshPinned) {
+                    triggerRefresh()
+                } else if (!refreshPinned) {
+                    pullDistance = 0f
+                }
+                return Velocity.Zero
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text("搜手机、教材、耳机、自行车", fontSize = 14.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, null) },
-                        modifier = Modifier.fillMaxWidth().padding(end = 16.dp).height(50.dp),
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFFF7F7F7),
-                            unfocusedContainerColor = Color(0xFFF7F7F7),
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                        ),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { viewModel.search(searchQuery) })
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            HomeSearchBar(
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onSearch = { viewModel.search(searchQuery) },
+                pullProgress = pullProgress,
+                isRefreshing = refreshPinned || isPullRefreshing,
+                onRefresh = triggerRefresh
             )
         },
         containerColor = Color.Transparent
     ) { innerPadding ->
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 0.dp, bottom = 12.dp),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).nestedScroll(refreshConnection),
+            contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 0.dp, bottom = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalItemSpacing = 10.dp
         ) {
+            if (refreshIndicatorVisible) {
+                item(span = StaggeredGridItemSpan.FullLine) {
+                    PullRefreshIndicator(
+                        label = refreshLabel,
+                        progress = pullProgress,
+                        refreshing = refreshPinned || isPullRefreshing
+                    )
+                }
+            }
             item(span = StaggeredGridItemSpan.FullLine) {
                 HomeHero(
                     productCount = uiState.products.size,
-                    onRefresh = { viewModel.loadProducts() }
+                    onRefresh = triggerRefresh
                 )
             }
 
@@ -198,6 +273,113 @@ fun HomeProductListScreen(
     }
 }
 
+@Composable
+private fun HomeSearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    pullProgress: Float,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit
+) {
+    Surface(color = Color(0xFFF5F7F6), tonalElevation = 0.dp) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                placeholder = { Text("搜手机、教材、耳机、自行车", fontSize = 14.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, null, tint = MarketMuted) },
+                modifier = Modifier.weight(1f).height(50.dp),
+                singleLine = true,
+                shape = RoundedCornerShape(18.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = MarketLine,
+                    unfocusedBorderColor = MarketLine,
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { onSearch() })
+            )
+            RefreshSpinnerButton(
+                progress = pullProgress,
+                refreshing = isRefreshing,
+                onClick = onRefresh
+            )
+        }
+    }
+}
+
+@Composable
+private fun RefreshSpinnerButton(progress: Float, refreshing: Boolean, onClick: () -> Unit) {
+    val infinite = rememberInfiniteTransition(label = "homeRefresh")
+    val rotation by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(animation = tween(720, easing = LinearEasing)),
+        label = "homeRefreshRotation"
+    )
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        tonalElevation = 2.dp,
+        shadowElevation = 2.dp,
+        modifier = Modifier.size(44.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(
+                progress = { if (refreshing) 0.72f else progress.coerceIn(0.12f, 1f) },
+                modifier = Modifier.size(23.dp).rotate(if (refreshing) rotation else progress * 180f),
+                color = MarketOrange,
+                trackColor = MarketGreen.copy(alpha = 0.22f),
+                strokeWidth = 3.dp
+            )
+        }
+    }
+}
+
+@Composable
+private fun PullRefreshIndicator(label: String, progress: Float, refreshing: Boolean) {
+    val infinite = rememberInfiniteTransition(label = "pullRefresh")
+    val rotation by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(animation = tween(720, easing = LinearEasing)),
+        label = "pullRefreshRotation"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator(
+            progress = { if (refreshing) 0.72f else progress.coerceIn(0.12f, 1f) },
+            modifier = Modifier
+                .size(22.dp)
+                .rotate(if (refreshing) rotation else progress * 180f),
+            color = MarketOrange,
+            trackColor = MarketGreen.copy(alpha = 0.20f),
+            strokeWidth = 3.dp
+        )
+        Text(
+            text = label,
+            color = MarketGreen,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeHero(
@@ -214,7 +396,7 @@ private fun HomeHero(
             modifier = Modifier
                 .background(
                     Brush.linearGradient(
-                        listOf(Color(0xFFFF6A1A), Color(0xFFFFB000), Color(0xFFFFF0D6))
+                        listOf(Color(0xFF20302A), MarketGreen, MarketOrange)
                     )
                 )
                 .padding(16.dp)
@@ -222,8 +404,8 @@ private fun HomeHero(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("校园淘好物", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-                        Text("像逛集市一样发现同校闲置", color = Color.White.copy(alpha = 0.86f), fontSize = 13.sp)
+                        Text("今天看看谁在出闲置", color = Color.White, fontSize = 23.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("同校面交 · 信用优先 · 好物实时刷新", color = Color.White.copy(alpha = 0.84f), fontSize = 13.sp)
                     }
                     AssistChip(
                         onClick = onRefresh,
@@ -252,12 +434,12 @@ private fun HomeHero(
 private fun PromoPill(text: String) {
     Text(
         text = text,
-        color = Color(0xFF7A2D00),
+        color = MarketGreen,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.72f))
+            .background(Color.White.copy(alpha = 0.86f))
             .padding(horizontal = 10.dp, vertical = 6.dp)
     )
 }
@@ -276,10 +458,10 @@ private fun CategoryStrip(selectedCategory: String, onSelect: (String) -> Unit) 
                 },
                 shape = RoundedCornerShape(999.dp),
                 colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFFFFE1D2),
-                    selectedLabelColor = Color(0xFFFF5A1F),
+                    selectedContainerColor = Color(0xFFE5F4EE),
+                    selectedLabelColor = MarketGreen,
                     containerColor = Color.White,
-                    labelColor = Color(0xFF6D5247)
+                    labelColor = MarketMuted
                 )
             )
         }
@@ -292,9 +474,9 @@ private fun FeedHeader(count: Int) {
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("猜你喜欢", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF241A16))
+        Text("猜你喜欢", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = MarketInk)
         Spacer(Modifier.weight(1f))
-        Text("${count} 件", fontSize = 12.sp, color = Color(0xFF8B6D60))
+        Text("${count} 件", fontSize = 12.sp, color = MarketGreen, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -324,9 +506,9 @@ fun ProductCard(product: ProductDto, onClick: () -> Unit) {
             .fillMaxWidth()
             .scale(scale)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(17.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box {
@@ -347,7 +529,7 @@ fun ProductCard(product: ProductDto, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 18.sp,
                     fontSize = 14.sp,
-                    color = Color(0xFF241A16)
+                    color = MarketInk
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     val conditionLabel = when (product.condition) {
@@ -359,35 +541,35 @@ fun ProductCard(product: ProductDto, onClick: () -> Unit) {
                     }
                     Text(
                         text = conditionLabel,
-                        color = Color(0xFFFF5A1F),
+                        color = MarketGreen,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFFFFE1D2))
+                            .background(Color(0xFFE5F4EE))
                             .padding(horizontal = 4.dp, vertical = 2.dp)
                     )
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text("¥", color = Color(0xFFE93600), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text("¥", color = Color(0xFFDF4A12), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     Text(
                         trimPrice(product.price),
-                        color = Color(0xFFE93600),
+                        color = Color(0xFFDF4A12),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
                     Spacer(Modifier.weight(1f))
                     AnimatedVisibility(product.favorited) {
-                        Icon(Icons.Default.Favorite, null, tint = Color(0xFFFF5A1F), modifier = Modifier.size(17.dp))
+                        Icon(Icons.Default.Favorite, null, tint = MarketOrange, modifier = Modifier.size(17.dp))
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.Verified, null, tint = Color(0xFF1F8A70), modifier = Modifier.size(14.dp))
-                    Text(product.sellerNickname, fontSize = 11.sp, color = Color(0xFF6D5247), maxLines = 1)
+                    Icon(Icons.Default.Verified, null, tint = MarketGreen, modifier = Modifier.size(14.dp))
+                    Text(product.sellerNickname, fontSize = 11.sp, color = MarketMuted, maxLines = 1)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.LocationOn, null, tint = Color(0xFFB08A78), modifier = Modifier.size(13.dp))
-                    Text(product.location ?: "校内面交", fontSize = 11.sp, color = Color(0xFF9A8074), maxLines = 1)
+                    Icon(Icons.Default.LocationOn, null, tint = MarketMuted, modifier = Modifier.size(13.dp))
+                    Text(product.location ?: "校内面交", fontSize = 11.sp, color = MarketMuted, maxLines = 1)
                 }
             }
         }
@@ -399,7 +581,7 @@ private fun StatusTag(status: String) {
     val isOnSale = status == "ON_SALE" || status == "AVAILABLE"
     Text(
         text = if (isOnSale) "在售" else status,
-        color = if (isOnSale) Color(0xFFFF5A1F) else Color(0xFF6F6F6F),
+        color = if (isOnSale) MarketGreen else Color(0xFF6F6F6F),
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
@@ -433,20 +615,20 @@ private fun QuickAccessGrid(onCategorySelected: (String) -> Unit) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             items.take(4).forEach { (label, icon) ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onCategorySelected(label) }) {
-                    Box(modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0xFFFFF0E6)), contentAlignment = Alignment.Center) {
-                        Icon(icon, null, tint = Color(0xFFFF5A1F), modifier = Modifier.size(22.dp))
+                    Box(modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0xFFE5F4EE)), contentAlignment = Alignment.Center) {
+                        Icon(icon, null, tint = MarketGreen, modifier = Modifier.size(22.dp))
                     }
-                    Text(label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp), color = Color(0xFF241A16))
+                    Text(label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp), color = MarketInk)
                 }
             }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             items.drop(4).forEach { (label, icon) ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onCategorySelected(if (label == "全新" || label == "信用") "全部" else label) }) {
-                    Box(modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0xFFF7F7F7)), contentAlignment = Alignment.Center) {
-                        Icon(icon, null, tint = Color(0xFF6D5247), modifier = Modifier.size(22.dp))
+                    Box(modifier = Modifier.size(42.dp).clip(CircleShape).background(MarketSurfaceSoft), contentAlignment = Alignment.Center) {
+                        Icon(icon, null, tint = MarketMuted, modifier = Modifier.size(22.dp))
                     }
-                    Text(label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp), color = Color(0xFF241A16))
+                    Text(label, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp), color = MarketInk)
                 }
             }
         }

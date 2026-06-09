@@ -9,6 +9,7 @@ import com.tps.dto.ApiResponse;
 import com.tps.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -58,6 +59,7 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/h2-console/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/{productId}/comments").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

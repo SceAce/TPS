@@ -57,6 +57,18 @@ CREATE TABLE IF NOT EXISTS product_images (
   INDEX idx_product_id (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 商品评论表
+CREATE TABLE IF NOT EXISTS product_comments (
+  id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  product_id  BIGINT NOT NULL COMMENT '商品ID',
+  user_id     BIGINT NOT NULL COMMENT '评论用户ID',
+  content     VARCHAR(500) NOT NULL COMMENT '评论内容',
+  status      ENUM('VISIBLE','DELETED') DEFAULT 'VISIBLE' COMMENT '评论状态',
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_comment_product_created (product_id, created_at),
+  INDEX idx_comment_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 收藏表
 CREATE TABLE IF NOT EXISTS favorites (
   id         BIGINT PRIMARY KEY AUTO_INCREMENT,

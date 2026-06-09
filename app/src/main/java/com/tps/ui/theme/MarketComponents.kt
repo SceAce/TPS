@@ -11,11 +11,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,20 +39,22 @@ import android.util.Log
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 
-val MarketOrange = Color(0xFFFF5A1F)
-val MarketGold = Color(0xFFFFB000)
+val MarketOrange = Color(0xFFFF6A1A)
+val MarketGold = Color(0xFFF5A400)
 val MarketGreen = Color(0xFF168765)
-val MarketInk = Color(0xFF241713)
-val MarketMuted = Color(0xFF8B6D60)
-val MarketBgTop = Color(0xFFFFEFE5)
-val MarketBgBottom = Color(0xFFF7F7F7)
+val MarketInk = Color(0xFF1F2522)
+val MarketMuted = Color(0xFF6E7973)
+val MarketLine = Color(0xFFDCE5E0)
+val MarketSurfaceSoft = Color(0xFFF8FAF9)
+val MarketBgTop = Color(0xFFF5F7F6)
+val MarketBgBottom = Color(0xFFEEF2F0)
 
 @Composable
 fun MarketBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(MarketBgTop, Color(0xFFFFFAF6), MarketBgBottom)))
+            .background(Brush.verticalGradient(listOf(MarketBgTop, Color(0xFFFAFBFA), MarketBgBottom)))
     ) {
         content()
     }
@@ -62,13 +69,13 @@ fun MarketHeroCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
-                .background(Brush.linearGradient(listOf(MarketOrange, Color(0xFFFF8A00), MarketGold)))
+                .background(Brush.linearGradient(listOf(Color(0xFF20302A), MarketGreen, MarketOrange)))
                 .padding(18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -85,9 +92,9 @@ fun MarketHeroCard(
 fun MarketCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(17.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(Modifier.padding(16.dp)) { content() }
     }
@@ -118,6 +125,51 @@ fun StatusPill(text: String, color: Color = MarketOrange) {
             .background(color.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
             .padding(horizontal = 10.dp, vertical = 5.dp)
     )
+}
+
+@Composable
+fun MarketBottomActions(
+    primaryText: String,
+    onPrimaryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    primaryEnabled: Boolean = true,
+    secondaryText: String? = null,
+    onSecondaryClick: (() -> Unit)? = null,
+) {
+    Surface(
+        color = Color.White.copy(alpha = 0.96f),
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (secondaryText != null && onSecondaryClick != null) {
+                OutlinedButton(
+                    onClick = onSecondaryClick,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(15.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MarketInk)
+                ) {
+                    Text(secondaryText, fontWeight = FontWeight.Bold)
+                }
+            }
+            Button(
+                onClick = onPrimaryClick,
+                enabled = primaryEnabled,
+                modifier = Modifier.weight(if (secondaryText == null) 1f else 1.2f),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
+            ) {
+                Text(primaryText, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
 }
 
 

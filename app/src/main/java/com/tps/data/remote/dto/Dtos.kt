@@ -111,6 +111,22 @@ data class ProductRequest(
     val imageUrls: List<String>
 )
 
+data class ProductCommentDto(
+    val id: Long,
+    val productId: Long,
+    val userId: Long,
+    val userNickname: String?,
+    val userAvatar: String?,
+    val content: String,
+    val status: String,
+    val mine: Boolean = false,
+    val createdAt: String?
+)
+
+data class ProductCommentRequest(
+    val content: String
+)
+
 // Order
 data class OrderDto(
     val id: Long,
