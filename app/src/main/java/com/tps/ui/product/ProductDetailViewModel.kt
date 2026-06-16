@@ -84,7 +84,7 @@ class ProductDetailViewModel @Inject constructor(
         }
     }
 
-    fun submitComment(content: String) {
+    fun submitComment(content: String, imageUris: List<Uri> = emptyList()) {
         val productId = _uiState.value.product?.id ?: return
         val trimmed = content.trim()
         if (trimmed.isBlank()) {
@@ -94,9 +94,10 @@ class ProductDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(commentSubmitting = true)
             try {
+                val imageUrls = imageUris.mapNotNull { uploadImage(it, "comment-image.jpg") }
                 val resp = apiService.createProductComment(
                     productId,
-                    ProductCommentRequest(content = trimmed.take(500))
+                    ProductCommentRequest(content = trimmed.take(500), imageUrls = imageUrls)
                 )
                 val createdComment = resp.data
                 _uiState.value = if (createdComment != null) {
@@ -237,7 +238,7 @@ class ProductDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isReporting = true, error = null, reportSubmitted = false)
             try {
-                val evidenceUrls = evidenceUris.mapNotNull { uploadEvidenceImage(it) }
+                val evidenceUrls = evidenceUris.mapNotNull { uploadImage(it, "report-evidence.jpg") }
                 val resp = apiService.reportProduct(
                     productId,
                     ReportProductRequest(reason = reason.trim(), evidenceImageUrls = evidenceUrls)
@@ -261,15 +262,15 @@ class ProductDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(reportSubmitted = false)
     }
 
-    private suspend fun uploadEvidenceImage(uri: Uri): String? {
+    private suspend fun uploadImage(uri: Uri, fallbackName: String): String? {
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
         val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
         val body = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
-        val part = MultipartBody.Part.createFormData("file", resolveFileName(uri), body)
+        val part = MultipartBody.Part.createFormData("file", resolveFileName(uri, fallbackName), body)
         return apiService.uploadImage(part).data?.url
     }
 
-    private fun resolveFileName(uri: Uri): String {
+    private fun resolveFileName(uri: Uri, fallbackName: String): String {
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (nameIndex >= 0 && cursor.moveToFirst()) {
@@ -277,6 +278,6 @@ class ProductDetailViewModel @Inject constructor(
                 if (!name.isNullOrBlank()) return name
             }
         }
-        return "report-evidence.jpg"
+        return fallbackName
     }
 }

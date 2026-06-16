@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS product_comments (
   product_id  BIGINT NOT NULL COMMENT '商品ID',
   user_id     BIGINT NOT NULL COMMENT '评论用户ID',
   content     VARCHAR(500) NOT NULL COMMENT '评论内容',
+  image_urls  VARCHAR(1000) COMMENT '评论图片URL，逗号分隔',
   status      ENUM('VISIBLE','DELETED') DEFAULT 'VISIBLE' COMMENT '评论状态',
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_comment_product_created (product_id, created_at),

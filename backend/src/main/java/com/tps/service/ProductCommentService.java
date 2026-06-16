@@ -19,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ProductCommentService {
@@ -51,6 +55,7 @@ public class ProductCommentService {
         comment.setProductId(productId);
         comment.setUserId(userId);
         comment.setContent(content);
+        comment.setImageUrls(serializeImageUrls(request.getImageUrls()));
         productCommentRepository.save(comment);
         return toResponse(comment, userId);
     }
@@ -90,9 +95,27 @@ public class ProductCommentService {
             response.setUserAvatar(fileService.toAbsoluteUrl(user.getAvatarUrl()));
         });
         response.setContent(comment.getContent());
+        response.setImageUrls(deserializeImageUrls(comment.getImageUrls()));
         response.setStatus(comment.getStatus().name());
         response.setMine(viewerId != null && viewerId.equals(comment.getUserId()));
         response.setCreatedAt(comment.getCreatedAt());
         return response;
+    }
+
+    private String serializeImageUrls(List<String> urls) {
+        if (urls == null || urls.isEmpty()) return null;
+        return urls.stream()
+                .filter(url -> url != null && !url.isBlank())
+                .limit(3)
+                .collect(Collectors.joining(","));
+    }
+
+    private List<String> deserializeImageUrls(String value) {
+        if (value == null || value.isBlank()) return List.of();
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(url -> !url.isBlank())
+                .map(fileService::toAbsoluteUrl)
+                .toList();
     }
 }

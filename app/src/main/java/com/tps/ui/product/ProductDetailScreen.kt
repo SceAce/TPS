@@ -397,20 +397,34 @@ private fun ProductCommentsCard(
     comments: List<ProductCommentDto>,
     loading: Boolean,
     submitting: Boolean,
-    onSubmit: (String) -> Unit,
+    onSubmit: (String, List<Uri>) -> Unit,
     onDelete: (Long) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showCommentSheet by remember { mutableStateOf(false) }
     var commentText by remember { mutableStateOf("") }
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var commentImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        val uri = pendingCameraUri
+        if (success && uri != null) {
+            commentImageUris = (commentImageUris + uri).take(3)
+        }
+        pendingCameraUri = null
+    }
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        commentImageUris = (commentImageUris + uris).distinct().take(3)
+    }
 
     if (showCommentSheet) {
         ModalBottomSheet(
             onDismissRequest = {
                 showCommentSheet = false
                 commentText = ""
+                commentImageUris = emptyList()
             },
             sheetState = sheetState
         ) {
@@ -433,6 +447,51 @@ private fun ProductCommentsCard(
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = { Text("${commentText.length}/500") }
                 )
+                Text("评论图片（最多3张）", fontWeight = FontWeight.Bold, color = MarketInk)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(commentImageUris) { uri ->
+                        Box {
+                            AppAsyncImage(
+                                url = uri.toString(),
+                                contentDescription = null,
+                                modifier = Modifier.size(76.dp).clip(RoundedCornerShape(16.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            IconButton(
+                                onClick = { commentImageUris = commentImageUris.filterNot { it == uri } },
+                                modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Close, null, tint = Color.White)
+                            }
+                        }
+                    }
+                    if (commentImageUris.size < 3) {
+                        item {
+                            OutlinedButton(
+                                onClick = {
+                                    val uri = createCameraImageUri(context, "comment-image-")
+                                    pendingCameraUri = uri
+                                    cameraLauncher.launch(uri)
+                                },
+                                modifier = Modifier.height(76.dp)
+                            ) {
+                                Icon(Icons.Default.PhotoCamera, null)
+                                Spacer(Modifier.width(6.dp))
+                                Text("拍照")
+                            }
+                        }
+                        item {
+                            OutlinedButton(
+                                onClick = { galleryLauncher.launch("image/*") },
+                                modifier = Modifier.height(76.dp)
+                            ) {
+                                Icon(Icons.Default.Image, null)
+                                Spacer(Modifier.width(6.dp))
+                                Text("相册")
+                            }
+                        }
+                    }
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -441,6 +500,7 @@ private fun ProductCommentsCard(
                         onClick = {
                             showCommentSheet = false
                             commentText = ""
+                            commentImageUris = emptyList()
                         },
                         modifier = Modifier.weight(1f)
                     ) {
@@ -448,9 +508,10 @@ private fun ProductCommentsCard(
                     }
                     Button(
                         onClick = {
-                            onSubmit(commentText)
+                            onSubmit(commentText, commentImageUris)
                             showCommentSheet = false
                             commentText = ""
+                            commentImageUris = emptyList()
                         },
                         enabled = commentText.isNotBlank() && !submitting,
                         modifier = Modifier.weight(1f),
@@ -560,6 +621,18 @@ private fun ProductCommentRow(
                 Text(formatCommentTime(comment.createdAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(comment.content, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
+            if (comment.imageUrls.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(comment.imageUrls) { imageUrl ->
+                        AppAsyncImage(
+                            url = resolveMediaUrl(imageUrl),
+                            contentDescription = null,
+                            modifier = Modifier.size(88.dp).clip(RoundedCornerShape(14.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+            }
         }
         if (comment.mine) {
             IconButton(onClick = { onDelete(comment.id) }, modifier = Modifier.size(34.dp)) {
@@ -645,7 +718,7 @@ private fun ReportProductSheet(
                     item {
                         OutlinedButton(
                             onClick = {
-                                val uri = createCameraImageUri(context)
+                                val uri = createCameraImageUri(context, "report-evidence-")
                                 pendingCameraUri = uri
                                 cameraLauncher.launch(uri)
                             },
@@ -685,8 +758,8 @@ private fun ReportProductSheet(
     }
 }
 
-private fun createCameraImageUri(context: Context): Uri {
-    val imageFile = File.createTempFile("report-evidence-", ".jpg", context.cacheDir)
+private fun createCameraImageUri(context: Context, prefix: String): Uri {
+    val imageFile = File.createTempFile(prefix, ".jpg", context.cacheDir)
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
 }
 

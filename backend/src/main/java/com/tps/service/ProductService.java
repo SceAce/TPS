@@ -55,6 +55,17 @@ public class ProductService {
             Set.of("博彩", "赌博", "下注", "彩票")
     );
 
+    private static final Set<String> SEARCH_BLACKLIST = Set.of(
+            "烟", "香烟", "电子烟", "烟草", "vape",
+            "酒", "白酒", "啤酒", "洋酒", "酒精",
+            "代考", "替考", "考试答案", "答案",
+            "代课", "替课", "签到", "代签",
+            "管制刀具", "刀具", "匕首", "甩棍",
+            "校园贷", "贷款", "借贷", "套现",
+            "药", "处方药", "违禁药", "迷药",
+            "博彩", "赌博", "下注", "彩票"
+    );
+
     @Transactional
     public ProductResponse create(Long userId, ProductRequest req) {
         User user = userRepository.findById(userId)
@@ -90,6 +101,9 @@ public class ProductService {
 
     public Page<ProductResponse> search(String keyword, String category, BigDecimal minPrice,
                                         BigDecimal maxPrice, String condition, int page, int size, Long currentUserId) {
+        if (containsBlacklistedSearchTerm(keyword)) {
+            throw new IllegalArgumentException("无法搜索请重试");
+        }
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("status"), Product.ProductStatus.ON_SALE));
@@ -257,6 +271,14 @@ public class ProductService {
         return value.toLowerCase(Locale.ROOT)
                 .replaceAll("[\\p{Punct}\\s　]+", "")
                 .trim();
+    }
+
+    private boolean containsBlacklistedSearchTerm(String keyword) {
+        String normalized = normalizeKeyword(keyword);
+        if (normalized.isBlank()) return false;
+        return SEARCH_BLACKLIST.stream()
+                .map(this::normalizeKeyword)
+                .anyMatch(normalized::contains);
     }
 
     private String serializeEvidenceImageUrls(List<String> urls) {

@@ -26,6 +26,9 @@ public class ProductComment {
     @Column(nullable = false, length = 500)
     private String content;
 
+    @Column(name = "image_urls", length = 1000)
+    private String imageUrls;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CommentStatus status = CommentStatus.VISIBLE;

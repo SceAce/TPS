@@ -118,13 +118,15 @@ data class ProductCommentDto(
     val userNickname: String?,
     val userAvatar: String?,
     val content: String,
+    val imageUrls: List<String> = emptyList(),
     val status: String,
     val mine: Boolean = false,
     val createdAt: String?
 )
 
 data class ProductCommentRequest(
-    val content: String
+    val content: String,
+    val imageUrls: List<String> = emptyList()
 )
 
 data class ReportProductRequest(

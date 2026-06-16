@@ -7,6 +7,7 @@ package com.tps.dto.product;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class ProductCommentResponse {
@@ -16,6 +17,7 @@ public class ProductCommentResponse {
     private String userNickname;
     private String userAvatar;
     private String content;
+    private List<String> imageUrls;
     private String status;
     private Boolean mine;
     private LocalDateTime createdAt;
