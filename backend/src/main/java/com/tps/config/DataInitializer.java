@@ -59,6 +59,11 @@ public class DataInitializer implements ApplicationRunner {
         execute("ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) NULL COMMENT '物流单号'");
         execute("ALTER TABLE orders MODIFY COLUMN status ENUM('PENDING','PAID','SHIPPED','DONE','CANCELLED','REFUNDING','REFUNDED') DEFAULT 'PENDING' COMMENT '订单状态'");
 
+        execute("ALTER TABLE reports MODIFY COLUMN status ENUM('PENDING','HANDLED','REJECTED') DEFAULT 'PENDING' COMMENT '处理状态'");
+        execute("ALTER TABLE reports ADD COLUMN handled_reason VARCHAR(255) NULL COMMENT '处理原因'");
+        execute("ALTER TABLE reports ADD COLUMN handled_by BIGINT NULL COMMENT '处理管理员ID'");
+        execute("ALTER TABLE reports ADD COLUMN handled_at DATETIME NULL COMMENT '处理时间'");
+
         execute("""
                 CREATE TABLE IF NOT EXISTS browsing_history (
                   id BIGINT PRIMARY KEY AUTO_INCREMENT,

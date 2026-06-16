@@ -42,6 +42,10 @@ public class AdminService {
     }
 
     public Page<UserProfileResponse> getUsers(String status, String keyword, int page, int size) {
+        return getUsers(status, keyword, "createdAt", "desc", page, size);
+    }
+
+    public Page<UserProfileResponse> getUsers(String status, String keyword, String sort, String direction, int page, int size) {
         Specification<User> spec = (root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             if (hasFilter(status)) {
@@ -57,7 +61,7 @@ public class AdminService {
             }
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
-        return userRepository.findAll(spec, pageable(page, size, "createdAt"))
+        return userRepository.findAll(spec, pageable(page, size, normalizeUserSort(sort), direction))
                 .map(this::toUserProfile);
     }
 
@@ -199,11 +203,17 @@ public class AdminService {
     public void handleReport(Long reportId, boolean takedown, String reason, Long adminId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("举报不存在"));
+        String normalizedReason = reason == null ? "" : reason.trim();
         if (takedown) {
-            String takedownReason = reason == null || reason.isBlank() ? report.getReason() : reason;
+            String takedownReason = normalizedReason.isBlank() ? report.getReason() : normalizedReason;
             takedownProduct(report.getProductId(), takedownReason, adminId);
+            report.setStatus(Report.ReportStatus.HANDLED);
+        } else {
+            report.setStatus(Report.ReportStatus.REJECTED);
         }
-        report.setStatus(Report.ReportStatus.HANDLED);
+        report.setHandledReason(normalizedReason.isBlank() ? null : normalizedReason);
+        report.setHandledBy(adminId);
+        report.setHandledAt(LocalDateTime.now());
         reportRepository.save(report);
     }
 
@@ -266,6 +276,9 @@ public class AdminService {
                 .ifPresent(image -> response.setProductImageUrl(fileService.toAbsoluteUrl(image.getImageUrl())));
         response.setReason(report.getReason());
         response.setStatus(report.getStatus().name());
+        response.setHandledReason(report.getHandledReason());
+        response.setHandledBy(report.getHandledBy());
+        response.setHandledAt(report.getHandledAt());
         response.setCreatedAt(report.getCreatedAt());
         return response;
     }
@@ -294,9 +307,24 @@ public class AdminService {
     }
 
     private Pageable pageable(int page, int size, String sortProperty) {
+        return pageable(page, size, sortProperty, "desc");
+    }
+
+    private Pageable pageable(int page, int size, String sortProperty, String direction) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        return PageRequest.of(safePage, safeSize, Sort.by(sortProperty).descending());
+        Sort sort = "asc".equalsIgnoreCase(direction)
+                ? Sort.by(sortProperty).ascending()
+                : Sort.by(sortProperty).descending();
+        return PageRequest.of(safePage, safeSize, sort);
+    }
+
+    private String normalizeUserSort(String sort) {
+        if (sort == null || sort.isBlank()) return "createdAt";
+        return switch (sort.trim()) {
+            case "nickname", "phone", "studentId", "creditScore", "status", "createdAt" -> sort.trim();
+            default -> "createdAt";
+        };
     }
 
     private boolean hasFilter(String value) {

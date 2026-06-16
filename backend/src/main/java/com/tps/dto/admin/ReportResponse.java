@@ -17,5 +17,8 @@ public class ReportResponse {
     private String productImageUrl;
     private String reason;
     private String status;
+    private String handledReason;
+    private Long handledBy;
+    private LocalDateTime handledAt;
     private LocalDateTime createdAt;
 }

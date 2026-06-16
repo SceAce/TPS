@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.AdminStats
+import com.tps.data.remote.dto.FeedbackDto
+import com.tps.data.remote.dto.FeedbackReplyRequest
 import com.tps.data.remote.dto.OrderDto
 import com.tps.data.remote.dto.ProductDto
 import com.tps.data.remote.dto.ReportDto
@@ -20,15 +22,21 @@ import javax.inject.Inject
 
 data class AdminUiState(
     val users: List<UserProfile> = emptyList(),
+    val userKeyword: String = "",
+    val userStatus: String? = null,
+    val userSort: String = "createdAt",
+    val userDirection: String = "desc",
     val listedProducts: List<ProductDto> = emptyList(),
     val reportedProducts: List<ReportDto> = emptyList(),
     val orders: List<OrderDto> = emptyList(),
+    val feedback: List<FeedbackDto> = emptyList(),
     val stats: AdminStats? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
     val operatingProductId: Long? = null,
-    val operatingOrderId: Long? = null
+    val operatingOrderId: Long? = null,
+    val operatingFeedbackId: Long? = null
 )
 
 @HiltViewModel
@@ -44,14 +52,32 @@ class AdminViewModel @Inject constructor(
         loadListedProducts()
         loadReportedProducts()
         loadOrders()
+        loadFeedback()
         loadStats()
     }
 
-    fun loadUsers() {
+    fun loadUsers(
+        keyword: String = _uiState.value.userKeyword,
+        status: String? = _uiState.value.userStatus,
+        sort: String = _uiState.value.userSort,
+        direction: String = _uiState.value.userDirection
+    ) {
         viewModelScope.launch {
             try {
-                val resp = apiService.adminGetUsers()
-                _uiState.value = _uiState.value.copy(users = resp.data?.content ?: emptyList())
+                val normalizedKeyword = keyword.trim()
+                val resp = apiService.adminGetUsers(
+                    status = status,
+                    keyword = normalizedKeyword.ifBlank { null },
+                    sort = sort,
+                    direction = direction
+                )
+                _uiState.value = _uiState.value.copy(
+                    users = resp.data?.content ?: emptyList(),
+                    userKeyword = keyword,
+                    userStatus = status,
+                    userSort = sort,
+                    userDirection = direction
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message)
             }
@@ -102,6 +128,17 @@ class AdminViewModel @Inject constructor(
         }
     }
 
+    fun loadFeedback(status: String? = null) {
+        viewModelScope.launch {
+            try {
+                val resp = apiService.adminGetFeedback(status = status)
+                _uiState.value = _uiState.value.copy(feedback = resp.data?.content ?: emptyList())
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message)
+            }
+        }
+    }
+
     fun banUser(userId: Long, isBanned: Boolean) {
         viewModelScope.launch {
             try {
@@ -115,14 +152,14 @@ class AdminViewModel @Inject constructor(
     }
 
     fun handleReport(reportId: Long, takedown: Boolean, reason: String? = null) {
-        if (takedown && reason.isNullOrBlank()) {
-            _uiState.value = _uiState.value.copy(error = "请填写下架原因")
+        if (reason.isNullOrBlank()) {
+            _uiState.value = _uiState.value.copy(error = if (takedown) "请填写下架原因" else "请填写驳回原因")
             return
         }
         viewModelScope.launch {
             try {
                 apiService.adminHandleReport(reportId, takedown, reason?.trim())
-                _uiState.value = _uiState.value.copy(successMessage = if (takedown) "举报已处理，商品已下架" else "举报已处理")
+                _uiState.value = _uiState.value.copy(successMessage = if (takedown) "举报已处理，商品已下架" else "举报已驳回")
                 loadReportedProducts()
                 loadListedProducts()
             } catch (e: Exception) {
@@ -194,6 +231,50 @@ class AdminViewModel @Inject constructor(
                 loadStats()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = e.message, operatingOrderId = null)
+            }
+        }
+    }
+
+    fun replyFeedback(feedbackId: Long, reply: String) {
+        if (reply.isBlank()) {
+            _uiState.value = _uiState.value.copy(error = "请填写回复内容")
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                operatingFeedbackId = feedbackId,
+                error = null,
+                successMessage = null
+            )
+            try {
+                apiService.adminReplyFeedback(feedbackId, FeedbackReplyRequest(reply.trim()))
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "反馈已回复",
+                    operatingFeedbackId = null
+                )
+                loadFeedback()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message, operatingFeedbackId = null)
+            }
+        }
+    }
+
+    fun updateFeedbackStatus(feedbackId: Long, status: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                operatingFeedbackId = feedbackId,
+                error = null,
+                successMessage = null
+            )
+            try {
+                apiService.adminUpdateFeedbackStatus(feedbackId, status)
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "反馈状态已更新",
+                    operatingFeedbackId = null
+                )
+                loadFeedback()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message, operatingFeedbackId = null)
             }
         }
     }

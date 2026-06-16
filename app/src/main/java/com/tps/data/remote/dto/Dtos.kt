@@ -205,6 +205,9 @@ data class ReportDto(
     val productImageUrl: String? = null,
     val reason: String?,
     val status: String,
+    val handledReason: String? = null,
+    val handledBy: Long? = null,
+    val handledAt: String? = null,
     val createdAt: String?
 )
 
@@ -226,6 +229,10 @@ data class FeedbackDto(
     val reply: String?,
     val createdAt: String?,
     val updatedAt: String? = null
+)
+
+data class FeedbackReplyRequest(
+    val reply: String
 )
 
 // Admin

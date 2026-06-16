@@ -29,8 +29,17 @@ public class Report {
     @Enumerated(EnumType.STRING)
     private ReportStatus status = ReportStatus.PENDING;
 
+    @Column(name = "handled_reason", length = 255)
+    private String handledReason;
+
+    @Column(name = "handled_by")
+    private Long handledBy;
+
+    @Column(name = "handled_at")
+    private LocalDateTime handledAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public enum ReportStatus { PENDING, HANDLED }
+    public enum ReportStatus { PENDING, HANDLED, REJECTED }
 }

@@ -351,6 +351,73 @@ class BackendIntegrationTest {
     }
 
     @Test
+    void adminCanRejectMaliciousReportWithoutTakingProductDown() throws Exception {
+        String sellerToken = register("13800138140", "seller").at("/data/token").asText();
+        String reporterToken = register("13800138141", "reporter").at("/data/token").asText();
+        String adminToken = createAdmin("13800138142");
+        Long productId = createProduct(sellerToken, null);
+
+        mockMvc.perform(post("/api/products/{id}/report", productId)
+                        .header("Authorization", "Bearer " + reporterToken)
+                        .param("reason", "恶意举报样例"))
+                .andExpect(status().isOk());
+
+        String reportBody = mockMvc.perform(get("/api/admin/reports")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .param("status", "PENDING"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].productId").value(productId))
+                .andReturn().getResponse().getContentAsString();
+        Long reportId = objectMapper.readTree(reportBody).at("/data/content/0/id").asLong();
+
+        mockMvc.perform(put("/api/admin/reports/{id}/handle", reportId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .param("takedown", "false")
+                        .param("reason", "证据不足，驳回举报"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/admin/reports")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .param("status", "REJECTED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].id").value(reportId))
+                .andExpect(jsonPath("$.data.content[0].status").value("REJECTED"))
+                .andExpect(jsonPath("$.data.content[0].handledReason").value("证据不足，驳回举报"))
+                .andExpect(jsonPath("$.data.content[0].handledBy").exists())
+                .andExpect(jsonPath("$.data.content[0].handledAt").exists());
+
+        mockMvc.perform(get("/api/products/{id}", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("ON_SALE"));
+    }
+
+    @Test
+    void adminUserListSupportsPhoneSearchAndNicknameSort() throws Exception {
+        String adminToken = createAdmin("13800138143");
+        register("15100000011", "Charlie");
+        register("15100000022", "Alice");
+        register("15100000033", "Bob");
+
+        mockMvc.perform(get("/api/admin/users")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .param("keyword", "00000022"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content", hasSize(1)))
+                .andExpect(jsonPath("$.data.content[0].phone").value("15100000022"));
+
+        mockMvc.perform(get("/api/admin/users")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .param("keyword", "151000000")
+                        .param("sort", "nickname")
+                        .param("direction", "asc")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].nickname").value("Alice"))
+                .andExpect(jsonPath("$.data.content[1].nickname").value("Bob"))
+                .andExpect(jsonPath("$.data.content[2].nickname").value("Charlie"));
+    }
+
+    @Test
     void adminCanListOnSaleProductsAndForceTakedownWithReason() throws Exception {
         String sellerToken = register("13800138106", "seller").at("/data/token").asText();
         String adminToken = createAdmin("13800138107");

@@ -38,6 +38,7 @@ fun AdminMainScreen(
         TabItem("用户", Icons.Default.People, "admin_users"),
         TabItem("商品", Icons.Default.Inventory, "admin_products"),
         TabItem("订单", Icons.Default.Receipt, "admin_orders"),
+        TabItem("反馈", Icons.Default.SupportAgent, "admin_feedback"),
         TabItem("统计", Icons.Default.BarChart, "admin_stats")
     )
     val currentRoute by navController.currentBackStackEntryAsState()
@@ -81,6 +82,7 @@ fun AdminMainScreen(
             composable("admin_users") { AdminUsersScreen() }
             composable("admin_products") { AdminProductsScreen() }
             composable("admin_orders") { AdminOrdersScreen() }
+            composable("admin_feedback") { AdminFeedbackScreen() }
             composable("admin_stats") { AdminStatsScreen() }
         }
     }

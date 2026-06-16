@@ -21,11 +21,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tps.data.remote.dto.FeedbackDto
 import com.tps.data.remote.dto.OrderDto
 import com.tps.data.remote.dto.ProductDto
 import com.tps.data.remote.dto.ReportDto
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.ui.theme.MarketCard
+import com.tps.ui.theme.MarketEmptyState
 import com.tps.ui.theme.MarketHeroCard
 import com.tps.ui.theme.MarketOrange
 import com.tps.ui.theme.StatusPill
@@ -34,14 +36,114 @@ import com.tps.ui.theme.StatusPill
 @Composable
 fun AdminUsersScreen(viewModel: AdminViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    var keyword by remember { mutableStateOf(uiState.userKeyword) }
+    var statusMenuExpanded by remember { mutableStateOf(false) }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
+    val statusOptions = listOf("全部" to null, "正常" to "ACTIVE", "已封禁" to "BANNED", "已注销" to "DEACTIVATED")
+    val sortOptions = listOf(
+        "创建时间新到旧" to ("createdAt" to "desc"),
+        "昵称 A-Z" to ("nickname" to "asc"),
+        "手机号升序" to ("phone" to "asc"),
+        "信用分高到低" to ("creditScore" to "desc")
+    )
+    val currentStatusLabel = statusOptions.firstOrNull { it.second == uiState.userStatus }?.first ?: "全部"
+    val currentSortLabel = sortOptions.firstOrNull { it.second.first == uiState.userSort && it.second.second == uiState.userDirection }?.first ?: "创建时间新到旧"
+
     Scaffold(containerColor = Color.Transparent, topBar = { TopAppBar(title = { Text("用户管理", fontWeight = FontWeight.Bold) }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item { MarketHeroCard("用户治理", "查看信用与账号状态，快速封禁异常用户。") }
+            item {
+                MarketCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = keyword,
+                            onValueChange = { keyword = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("搜索昵称 / 手机号 / 学号") }
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            ExposedDropdownMenuBox(
+                                expanded = statusMenuExpanded,
+                                onExpandedChange = { statusMenuExpanded = !statusMenuExpanded },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                OutlinedTextField(
+                                    value = currentStatusLabel,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    singleLine = true,
+                                    label = { Text("状态") },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = statusMenuExpanded) },
+                                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = statusMenuExpanded,
+                                    onDismissRequest = { statusMenuExpanded = false }
+                                ) {
+                                    statusOptions.forEach { (label, value) ->
+                                        DropdownMenuItem(
+                                            text = { Text(label) },
+                                            onClick = {
+                                                statusMenuExpanded = false
+                                                viewModel.loadUsers(keyword = keyword, status = value)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            ExposedDropdownMenuBox(
+                                expanded = sortMenuExpanded,
+                                onExpandedChange = { sortMenuExpanded = !sortMenuExpanded },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                OutlinedTextField(
+                                    value = currentSortLabel,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    singleLine = true,
+                                    label = { Text("排序") },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sortMenuExpanded) },
+                                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = sortMenuExpanded,
+                                    onDismissRequest = { sortMenuExpanded = false }
+                                ) {
+                                    sortOptions.forEach { (label, sortPair) ->
+                                        DropdownMenuItem(
+                                            text = { Text(label) },
+                                            onClick = {
+                                                sortMenuExpanded = false
+                                                viewModel.loadUsers(
+                                                    keyword = keyword,
+                                                    status = uiState.userStatus,
+                                                    sort = sortPair.first,
+                                                    direction = sortPair.second
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Button(
+                            onClick = { viewModel.loadUsers(keyword = keyword) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
+                        ) {
+                            Text("搜索")
+                        }
+                    }
+                }
+            }
+            item { SectionHeader("用户列表", "${uiState.users.size} 人") }
             items(uiState.users) { user ->
                 MarketCard {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(user.nickname, fontWeight = FontWeight.Bold)
+                            Text("手机号：${user.phone ?: "-"} | 学号：${user.studentId ?: "-"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("信用分：${user.creditScore}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         StatusPill(user.status, if (user.status == "BANNED") MaterialTheme.colorScheme.error else MarketOrange)
@@ -68,6 +170,8 @@ fun AdminProductsScreen(viewModel: AdminViewModel = hiltViewModel()) {
     var takedownReason by remember { mutableStateOf("") }
     var pendingReportTakedown by remember { mutableStateOf<ReportDto?>(null) }
     var reportTakedownReason by remember { mutableStateOf("") }
+    var pendingReportReject by remember { mutableStateOf<ReportDto?>(null) }
+    var reportRejectReason by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.error, uiState.successMessage) {
         val message = uiState.error ?: uiState.successMessage
@@ -164,6 +268,50 @@ fun AdminProductsScreen(viewModel: AdminViewModel = hiltViewModel()) {
             }
         )
     }
+    pendingReportReject?.let { report ->
+        AlertDialog(
+            onDismissRequest = {
+                pendingReportReject = null
+                reportRejectReason = ""
+            },
+            title = { Text("驳回举报") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(report.productTitle ?: "商品ID：${report.productId}")
+                    Text("用户举报原因：${report.reason ?: "无"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OutlinedTextField(
+                        value = reportRejectReason,
+                        onValueChange = { reportRejectReason = it.take(255) },
+                        label = { Text("驳回原因") },
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text("${reportRejectReason.length}/255", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.handleReport(report.id, false, reportRejectReason)
+                        pendingReportReject = null
+                        reportRejectReason = ""
+                    },
+                    enabled = reportRejectReason.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
+                ) {
+                    Text("确认驳回")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingReportReject = null
+                    reportRejectReason = ""
+                }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -221,6 +369,12 @@ fun AdminProductsScreen(viewModel: AdminViewModel = hiltViewModel()) {
                         }
                         Text("举报原因：${report.reason ?: "无"}", style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = {
+                                pendingReportReject = report
+                                reportRejectReason = ""
+                            }) {
+                                Text("驳回举报")
+                            }
                             Button(onClick = {
                                 pendingReportTakedown = report
                                 reportTakedownReason = ""
@@ -401,6 +555,207 @@ fun AdminOrdersScreen(viewModel: AdminViewModel = hiltViewModel()) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdminFeedbackScreen(viewModel: AdminViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var selectedStatus by remember { mutableStateOf<String?>(null) }
+    var replyingFeedback by remember { mutableStateOf<FeedbackDto?>(null) }
+    var replyText by remember { mutableStateOf("") }
+    val statusFilters = listOf<Pair<String, String?>>(
+        "全部" to null,
+        "待处理" to "PENDING",
+        "处理中" to "PROCESSING",
+        "已完成" to "DONE",
+        "已关闭" to "CLOSED"
+    )
+
+    LaunchedEffect(uiState.error, uiState.successMessage) {
+        val message = uiState.error ?: uiState.successMessage
+        if (message != null) {
+            snackbarHostState.showSnackbar(message)
+            viewModel.consumeMessages()
+        }
+    }
+
+    replyingFeedback?.let { feedback ->
+        AlertDialog(
+            onDismissRequest = {
+                replyingFeedback = null
+                replyText = ""
+            },
+            title = { Text("回复反馈") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(feedback.content, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OutlinedTextField(
+                        value = replyText,
+                        onValueChange = { replyText = it.take(1000) },
+                        label = { Text("回复内容") },
+                        minLines = 4,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text("${replyText.length}/1000", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.replyFeedback(feedback.id, replyText)
+                        replyingFeedback = null
+                        replyText = ""
+                    },
+                    enabled = replyText.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
+                ) {
+                    Text("发送回复")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    replyingFeedback = null
+                    replyText = ""
+                }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = { TopAppBar(title = { Text("反馈处理", fontWeight = FontWeight.Bold) }) }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            item { MarketHeroCard("用户反馈", "查看问题和建议，回复处理结果，沉淀平台运营线索。") }
+
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    statusFilters.forEach { (label, status) ->
+                        FilterChip(
+                            selected = selectedStatus == status,
+                            onClick = {
+                                selectedStatus = status
+                                viewModel.loadFeedback(status)
+                            },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+            }
+
+            item {
+                SectionHeader("反馈列表", "${uiState.feedback.size} 条")
+            }
+
+            if (uiState.feedback.isEmpty()) {
+                item {
+                    MarketCard {
+                        MarketEmptyState("暂无反馈", "当前筛选条件下没有用户反馈")
+                    }
+                }
+            } else {
+                items(uiState.feedback, key = { it.id }) { feedback ->
+                    AdminFeedbackCard(
+                        feedback = feedback,
+                        operating = uiState.operatingFeedbackId == feedback.id,
+                        onReply = {
+                            replyingFeedback = feedback
+                            replyText = feedback.reply.orEmpty()
+                        },
+                        onStatus = { status -> viewModel.updateFeedbackStatus(feedback.id, status) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdminFeedbackCard(
+    feedback: FeedbackDto,
+    operating: Boolean,
+    onReply: () -> Unit,
+    onStatus: (String) -> Unit
+) {
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(feedback.type, fontWeight = FontWeight.Bold, color = MarketOrange)
+                    Text("用户ID：${feedback.userId}${feedback.userNickname?.let { " | $it" } ?: ""}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                StatusPill(feedback.status, feedbackStatusColor(feedback.status))
+            }
+
+            Text(feedback.content, style = MaterialTheme.typography.bodyMedium)
+
+            if (!feedback.contact.isNullOrBlank()) {
+                Text("联系方式：${feedback.contact}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            if (!feedback.reply.isNullOrBlank()) {
+                Surface(
+                    color = Color(0xFFFFF4ED),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("平台回复", fontWeight = FontWeight.Bold, color = MarketOrange)
+                        Text(feedback.reply, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            Text(
+                listOfNotNull(feedback.createdAt?.let { "提交：$it" }, feedback.updatedAt?.let { "更新：$it" }).joinToString("  "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (operating) {
+                    CircularProgressIndicator(modifier = Modifier.padding(end = 12.dp), strokeWidth = 2.dp)
+                }
+                TextButton(onClick = { onStatus("PROCESSING") }, enabled = !operating && feedback.status != "PROCESSING") {
+                    Text("处理中")
+                }
+                TextButton(onClick = { onStatus("DONE") }, enabled = !operating && feedback.status != "DONE") {
+                    Text("完成")
+                }
+                TextButton(onClick = { onStatus("CLOSED") }, enabled = !operating && feedback.status != "CLOSED") {
+                    Text("关闭")
+                }
+                Button(
+                    onClick = onReply,
+                    enabled = !operating,
+                    colors = ButtonDefaults.buttonColors(containerColor = MarketOrange)
+                ) {
+                    Text("回复")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun feedbackStatusColor(status: String): Color = when (status) {
+    "DONE" -> Color(0xFF2E7D32)
+    "CLOSED" -> MaterialTheme.colorScheme.outline
+    "PROCESSING" -> Color(0xFF1976D2)
+    else -> MarketOrange
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

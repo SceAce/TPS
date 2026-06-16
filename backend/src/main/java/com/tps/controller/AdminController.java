@@ -28,9 +28,11 @@ public class AdminController {
     public ApiResponse<?> getUsers(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "desc") String direction,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(PageResponse.from(adminService.getUsers(status, keyword, page, size)));
+        return ApiResponse.success(PageResponse.from(adminService.getUsers(status, keyword, sort, direction, page, size)));
     }
 
     @PutMapping("/users/{id}/ban")

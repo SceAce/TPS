@@ -218,6 +218,8 @@ interface ApiService {
     suspend fun adminGetUsers(
         @Query("status") status: String? = null,
         @Query("keyword") keyword: String? = null,
+        @Query("sort") sort: String? = null,
+        @Query("direction") direction: String? = null,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
     ): ApiResponse<PageResponse<UserProfile>>
@@ -283,6 +285,25 @@ interface ApiService {
         @Query("title") title: String? = null,
         @Query("content") content: String
     ): ApiResponse<Unit>
+
+    @GET("api/admin/feedback")
+    suspend fun adminGetFeedback(
+        @Query("status") status: String? = null,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): ApiResponse<PageResponse<FeedbackDto>>
+
+    @PUT("api/admin/feedback/{id}/reply")
+    suspend fun adminReplyFeedback(
+        @Path("id") id: Long,
+        @Body req: FeedbackReplyRequest
+    ): ApiResponse<FeedbackDto>
+
+    @PUT("api/admin/feedback/{id}/status")
+    suspend fun adminUpdateFeedbackStatus(
+        @Path("id") id: Long,
+        @Query("status") status: String
+    ): ApiResponse<FeedbackDto>
 
     @GET("api/admin/stats")
     suspend fun adminGetStats(): ApiResponse<AdminStats>
