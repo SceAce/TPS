@@ -8,14 +8,12 @@ TPS 是一个校园二手交易 APP，仓库内包含 Android 客户端、Spring
 - Maven 3.8 或更高版本
 - MariaDB / MySQL，可本地访问 `localhost:3306`
 - Android SDK 与 `adb`
-- 已创建数据库 `tps`
+- 已执行首次部署脚本创建数据库 `tps`
 
-数据库初始化示例：
+首次部署：
 
-```sql
-CREATE DATABASE IF NOT EXISTS tps
-  DEFAULT CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+```bash
+./deploy/first-deploy.sh
 ```
 
 常用默认值：
@@ -26,7 +24,15 @@ CREATE DATABASE IF NOT EXISTS tps
 
 ## 使用教程
 
-### 1. 启动后端
+### 1. 首次部署数据库
+
+```bash
+TPS_DB_USERNAME=root TPS_DB_PASSWORD=YOU_DATABASE_PASSWD ./deploy/first-deploy.sh
+```
+
+脚本会导入 [deploy/database/tps-init.sql](deploy/database/tps-init.sql)，并准备上传目录 `img/`。
+
+### 2. 启动后端
 
 ```bash
 cd /home/source/myGtihub/TPS
@@ -51,7 +57,7 @@ curl -i http://127.0.0.1:8080/api/files/ping
 http://<你的电脑IP>:8080/swagger-ui.html
 ```
 
-### 2. 构建 Android 调试包
+### 3. 构建 Android 调试包
 
 局域网真机：
 
@@ -68,14 +74,14 @@ adb reverse tcp:8080 tcp:8080
 
 如果命令行构建提示找不到 SDK，请在项目根目录配置 `local.properties`，或者导出 `ANDROID_HOME`。
 
-### 3. 安装 APK
+### 4. 安装 APK
 
 ```bash
 adb devices
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### 4. 生成测试数据
+### 5. 生成测试数据
 
 后端启动后可执行：
 
