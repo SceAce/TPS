@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 data class ProductListUiState(
@@ -33,6 +34,7 @@ class ProductViewModel @Inject constructor(
     private var keyword: String? = null
     private var category: String? = null
     private var maxPrice: Double? = null
+    private var lastActionWasSearch: Boolean = false
 
     init { loadProducts() }
 
@@ -51,7 +53,7 @@ class ProductViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = errorMessage(e))
             }
         }
     }
@@ -73,27 +75,38 @@ class ProductViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = errorMessage(e))
             }
         }
     }
 
     fun search(query: String) {
+        lastActionWasSearch = query.isNotBlank()
         keyword = query.ifBlank { null }
         maxPrice = null
         loadProducts()
     }
 
     fun filterCategory(cat: String?) {
+        lastActionWasSearch = false
         category = cat
         maxPrice = null
         loadProducts()
     }
 
     fun filterLowPrice() {
+        lastActionWasSearch = false
         keyword = null
         category = null
         maxPrice = 50.0
         loadProducts()
+    }
+
+    private fun errorMessage(error: Exception): String {
+        return if (lastActionWasSearch && error is HttpException && error.code() == 400) {
+            "无法搜索请重试"
+        } else {
+            error.message ?: "加载失败"
+        }
     }
 }

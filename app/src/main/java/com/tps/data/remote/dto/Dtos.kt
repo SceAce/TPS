@@ -118,13 +118,20 @@ data class ProductCommentDto(
     val userNickname: String?,
     val userAvatar: String?,
     val content: String,
+    val imageUrls: List<String> = emptyList(),
     val status: String,
     val mine: Boolean = false,
     val createdAt: String?
 )
 
 data class ProductCommentRequest(
-    val content: String
+    val content: String,
+    val imageUrls: List<String> = emptyList()
+)
+
+data class ReportProductRequest(
+    val reason: String,
+    val evidenceImageUrls: List<String> = emptyList()
 )
 
 // Order
@@ -204,6 +211,7 @@ data class ReportDto(
     val productTitle: String? = null,
     val productImageUrl: String? = null,
     val reason: String?,
+    val evidenceImageUrls: List<String>? = null,
     val status: String,
     val handledReason: String? = null,
     val handledBy: Long? = null,

@@ -13,11 +13,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
     private static final String ADMIN_PHONE = "18888888888";
+    private static final String ADMIN_STUDENT_ID = "00000000";
     private static final String ADMIN_PASSWORD = "admin123";
 
     private final UserRepository userRepository;
@@ -29,9 +32,16 @@ public class DataInitializer implements ApplicationRunner {
         // 先补兼容迁移，再创建管理员账号，避免老库缺字段时启动即失败。
         applySchemaCompatibilityMigrations();
 
-        User admin = userRepository.findByPhone(ADMIN_PHONE).orElseGet(User::new);
+        Optional<User> userByPhone = userRepository.findByPhone(ADMIN_PHONE);
+        Optional<User> userByStudentId = userRepository.findByStudentId(ADMIN_STUDENT_ID);
+        User admin = userByPhone.or(() -> userByStudentId).orElseGet(User::new);
+        boolean sameStudentIdOwner = userByStudentId.isEmpty()
+                || userByStudentId.get().getId().equals(admin.getId());
+
         admin.setPhone(ADMIN_PHONE);
-        admin.setStudentId("00000000");
+        if (sameStudentIdOwner) {
+            admin.setStudentId(ADMIN_STUDENT_ID);
+        }
         admin.setPasswordHash(passwordEncoder.encode(ADMIN_PASSWORD));
         admin.setNickname("admin");
         admin.setRole(User.Role.ADMIN);
@@ -55,6 +65,8 @@ public class DataInitializer implements ApplicationRunner {
         execute("ALTER TABLE products ADD COLUMN takedown_at DATETIME NULL COMMENT '管理员下架时间'");
 
         execute("ALTER TABLE messages ADD COLUMN is_read TINYINT DEFAULT 0 COMMENT '是否已读'");
+        execute("ALTER TABLE reports ADD COLUMN evidence_image_urls VARCHAR(1000) NULL COMMENT '举报凭证图片URL，逗号分隔'");
+        execute("ALTER TABLE product_comments ADD COLUMN image_urls VARCHAR(1000) NULL COMMENT '评论图片URL，逗号分隔'");
 
         execute("ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) NULL COMMENT '物流单号'");
         execute("ALTER TABLE orders MODIFY COLUMN status ENUM('PENDING','PAID','SHIPPED','DONE','CANCELLED','REFUNDING','REFUNDED') DEFAULT 'PENDING' COMMENT '订单状态'");

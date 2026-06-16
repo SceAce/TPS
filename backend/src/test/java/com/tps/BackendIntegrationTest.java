@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
@@ -146,12 +147,16 @@ class BackendIntegrationTest {
         String commentBody = mockMvc.perform(post("/api/products/{productId}/comments", productId)
                         .header("Authorization", "Bearer " + commenterToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("content", "  Interested in this phone  "))))
+                        .content(json(Map.of(
+                                "content", "  Interested in this phone  ",
+                                "imageUrls", List.of("/img/comment-a.jpg", "/img/comment-b.jpg")
+                        ))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.productId").value(productId))
                 .andExpect(jsonPath("$.data.userId").value(commenterId))
                 .andExpect(jsonPath("$.data.userNickname").value("commenter"))
                 .andExpect(jsonPath("$.data.content").value("Interested in this phone"))
+                .andExpect(jsonPath("$.data.imageUrls", hasSize(2)))
                 .andExpect(jsonPath("$.data.status").value("VISIBLE"))
                 .andExpect(jsonPath("$.data.mine").value(true))
                 .andReturn().getResponse().getContentAsString();
@@ -186,6 +191,13 @@ class BackendIntegrationTest {
                         .header("Authorization", "Bearer " + commenterToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content", hasSize(0)));
+    }
+
+    @Test
+    void blacklistedSearchTermsAreRejected() throws Exception {
+        mockMvc.perform(get("/api/products").param("keyword", "电子烟"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("无法搜索请重试"));
     }
 
     @Test
@@ -516,6 +528,13 @@ class BackendIntegrationTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("未登录或登录已过期"));
+    }
+
+    @Test
+    void actuatorHealthIsPublic() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 
     private JsonNode register(String phone, String nickname) throws Exception {

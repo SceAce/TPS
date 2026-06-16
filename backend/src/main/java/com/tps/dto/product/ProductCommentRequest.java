@@ -8,9 +8,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ProductCommentRequest {
     @NotBlank(message = "评论内容不能为空")
     @Size(max = 500, message = "评论内容不能超过500字")
     private String content;
+
+    @Size(max = 3, message = "评论图片最多上传3张")
+    private List<String> imageUrls;
 }
