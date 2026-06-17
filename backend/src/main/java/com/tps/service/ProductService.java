@@ -24,11 +24,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,29 +40,7 @@ public class ProductService {
     private final ReportRepository reportRepository;
     private final NotificationRepository notificationRepository;
     private final ReviewRepository reviewRepository;
-
-    private static final List<Set<String>> SENSITIVE_KEYWORD_GROUPS = List.of(
-            Set.of("烟", "香烟", "电子烟", "烟草", "vape"),
-            Set.of("酒", "白酒", "啤酒", "洋酒", "酒精"),
-            Set.of("代考", "替考", "考试答案", "答案"),
-            Set.of("代课", "替课", "签到", "代签"),
-            Set.of("代跑", "跑腿", "代取", "代拿"),
-            Set.of("管制刀具", "刀具", "匕首", "甩棍"),
-            Set.of("校园贷", "贷款", "借贷", "套现"),
-            Set.of("药", "处方药", "违禁药", "迷药"),
-            Set.of("博彩", "赌博", "下注", "彩票")
-    );
-
-    private static final Set<String> SEARCH_BLACKLIST = Set.of(
-            "烟", "香烟", "电子烟", "烟草", "vape",
-            "酒", "白酒", "啤酒", "洋酒", "酒精",
-            "代考", "替考", "考试答案", "答案",
-            "代课", "替课", "签到", "代签",
-            "管制刀具", "刀具", "匕首", "甩棍",
-            "校园贷", "贷款", "借贷", "套现",
-            "药", "处方药", "违禁药", "迷药",
-            "博彩", "赌博", "下注", "彩票"
-    );
+    private final SensitiveWordService sensitiveWordService;
 
     @Transactional
     public ProductResponse create(Long userId, ProductRequest req) {
@@ -74,6 +49,7 @@ public class ProductService {
         if (Boolean.TRUE.equals(user.getPublishBanned())) {
             throw new IllegalArgumentException("账号已被禁止发布商品，请联系管理员");
         }
+        sensitiveWordService.rejectIfSensitive(req.getTitle(), req.getDescription(), req.getCategory(), req.getLocation());
         Product product = new Product();
         product.setUserId(userId);
         product.setTitle(req.getTitle());
@@ -105,15 +81,15 @@ public class ProductService {
 
     public Page<ProductResponse> search(String keyword, String category, BigDecimal minPrice,
                                         BigDecimal maxPrice, String condition, int page, int size, Long currentUserId) {
-        if (containsBlacklistedSearchTerm(keyword)) {
-            throw new IllegalArgumentException("无法搜索请重试");
+        if (sensitiveWordService.containsSensitive(keyword)) {
+            throw new IllegalArgumentException(SensitiveWordService.SEARCH_MESSAGE);
         }
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("status"), Product.ProductStatus.ON_SALE));
             if (keyword != null && !keyword.isBlank()) {
                 List<Predicate> keywordPredicates = new ArrayList<>();
-                for (String term : expandSearchTerms(keyword)) {
+                for (String term : sensitiveWordService.expandSearchTerms(keyword)) {
                     String pattern = "%" + term.toLowerCase(Locale.ROOT) + "%";
                     keywordPredicates.add(cb.like(cb.lower(root.get("title")), pattern));
                     keywordPredicates.add(cb.like(cb.lower(root.get("description")), pattern));
@@ -158,6 +134,7 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("商品不存在"));
         if (!product.getUserId().equals(userId)) throw new IllegalArgumentException("无权操作");
+        sensitiveWordService.rejectIfSensitive(req.getTitle(), req.getDescription(), req.getCategory(), req.getLocation());
         product.setTitle(req.getTitle());
         product.setDescription(req.getDescription());
         product.setPrice(req.getPrice());
@@ -235,6 +212,7 @@ public class ProductService {
         if (reportRepository.existsByReporterIdAndProductIdAndStatus(userId, productId, Report.ReportStatus.PENDING)) {
             return;
         }
+        sensitiveWordService.rejectIfSensitive(reason);
         Report report = new Report();
         report.setReporterId(userId);
         report.setProductId(productId);
@@ -248,41 +226,6 @@ public class ProductService {
         notification.setTitle("商品被举报");
         notification.setContent("你的商品被用户举报，平台将进行审核");
         notificationRepository.save(notification);
-    }
-
-    private List<String> expandSearchTerms(String keyword) {
-        String normalized = normalizeKeyword(keyword);
-        if (normalized.isBlank()) {
-            return List.of();
-        }
-        LinkedHashSet<String> terms = new LinkedHashSet<>();
-        terms.add(keyword.trim());
-        terms.add(normalized);
-        Arrays.stream(normalized.split("\\s+"))
-                .filter(token -> !token.isBlank())
-                .forEach(terms::add);
-        for (Set<String> group : SENSITIVE_KEYWORD_GROUPS) {
-            boolean hit = group.stream().map(this::normalizeKeyword).anyMatch(terms::contains);
-            if (hit) {
-                terms.addAll(group);
-            }
-        }
-        return terms.stream().filter(term -> !term.isBlank()).toList();
-    }
-
-    private String normalizeKeyword(String value) {
-        if (value == null) return "";
-        return value.toLowerCase(Locale.ROOT)
-                .replaceAll("[\\p{Punct}\\s　]+", "")
-                .trim();
-    }
-
-    private boolean containsBlacklistedSearchTerm(String keyword) {
-        String normalized = normalizeKeyword(keyword);
-        if (normalized.isBlank()) return false;
-        return SEARCH_BLACKLIST.stream()
-                .map(this::normalizeKeyword)
-                .anyMatch(normalized::contains);
     }
 
     private String serializeEvidenceImageUrls(List<String> urls) {

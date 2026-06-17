@@ -20,9 +20,11 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final SensitiveWordService sensitiveWordService;
 
     @Transactional
     public FeedbackResponse create(Long userId, FeedbackRequest request) {
+        sensitiveWordService.rejectIfSensitive(request.getType(), request.getContent(), request.getContact());
         Feedback feedback = new Feedback();
         feedback.setUserId(userId);
         feedback.setType(request.getType() == null || request.getType().isBlank() ? "GENERAL" : request.getType());

@@ -21,6 +21,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final SensitiveWordService sensitiveWordService;
 
     private static final String MOCK_CODE = "1234";
     private static final Map<String, String> ADMIN_LOGIN_PHONES = Map.of(
@@ -43,6 +44,7 @@ public class AuthService {
         if (userRepository.existsByStudentId(req.getStudentId())) {
             throw new IllegalArgumentException("学号已认证");
         }
+        sensitiveWordService.rejectIfSensitive(req.getNickname());
         User user = new User();
         user.setPhone(req.getPhone());
         user.setStudentId(req.getStudentId());

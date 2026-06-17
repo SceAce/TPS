@@ -239,6 +239,96 @@ class BackendIntegrationTest {
     }
 
     @Test
+    void userGeneratedContentRejectsSensitiveWordsAcrossEntryPoints() throws Exception {
+        String sellerToken = register("13800138620", "clean-seller").at("/data/token").asText();
+        String buyerToken = register("13800138621", "clean-buyer").at("/data/token").asText();
+        Long sellerId = userRepository.findByPhone("13800138620").orElseThrow().getId();
+        Long productId = createProduct(sellerToken, null);
+        String expectedMessage = "内容包含敏感词，请修改后再提交";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "phone", "13800138622",
+                                "password", "123456",
+                                "code", "1234",
+                                "studentId", "00138622",
+                                "nickname", "傻逼用户"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        mockMvc.perform(put("/api/users/me")
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("nickname", "clean", "bio", "你 真 垃 圾", "location", "Shanghai"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        mockMvc.perform(post("/api/products")
+                        .header("Authorization", "Bearer " + sellerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("title", "二手电子烟", "description", "clean", "price", new BigDecimal("10.00"), "category", "digital", "condition", "GOOD", "location", "Shanghai"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        mockMvc.perform(put("/api/products/{id}", productId)
+                        .header("Authorization", "Bearer " + sellerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("title", "Phone", "description", "去死吧", "price", new BigDecimal("10.00"), "category", "digital", "condition", "GOOD", "location", "Shanghai"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        mockMvc.perform(post("/api/products/{productId}/comments", productId)
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("content", "你这个蠢货"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        Long conversationId = objectMapper.readTree(mockMvc.perform(post("/api/messages/conversation")
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .param("targetUserId", sellerId.toString())
+                        .param("productId", productId.toString()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).at("/data/id").asLong();
+
+        mockMvc.perform(post("/api/messages/{conversationId}", conversationId)
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .param("content", "王 八 蛋"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        mockMvc.perform(post("/api/feedback")
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("type", "GENERAL", "content", "客服是废物", "contact", "13800138621"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        mockMvc.perform(post("/api/products/{id}/report", productId)
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .param("reason", "卖家是傻叉"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+
+        Long orderId = createOrder(buyerToken, productId);
+        mockMvc.perform(put("/api/orders/{id}/pay", orderId).header("Authorization", "Bearer " + buyerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/orders/{id}/ship", orderId).header("Authorization", "Bearer " + sellerToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/orders/{id}/confirm", orderId).header("Authorization", "Bearer " + buyerToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/orders/{id}/review", orderId)
+                        .header("Authorization", "Bearer " + buyerToken)
+                        .param("score", "1")
+                        .param("content", "垃圾卖家"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+    }
+
+    @Test
     void orderFlowSupportsTradeReviewAndPreventsDuplicateActiveOrders() throws Exception {
         String sellerToken = register("13800138002", "seller").at("/data/token").asText();
         String buyerToken = register("13800138003", "buyer").at("/data/token").asText();

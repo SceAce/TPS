@@ -27,6 +27,7 @@ public class OrderService {
     private final ReviewRepository reviewRepository;
     private final NotificationRepository notificationRepository;
     private final FileService fileService;
+    private final SensitiveWordService sensitiveWordService;
 
     @Transactional
     public OrderResponse createOrder(Long buyerId, Long productId, BigDecimal finalPrice) {
@@ -164,6 +165,7 @@ public class OrderService {
         if (reviewRepository.existsByOrderIdAndReviewerId(orderId, userId)) {
             throw new IllegalArgumentException("不能重复评价");
         }
+        sensitiveWordService.rejectIfSensitive(content);
         Long revieweeId = order.getBuyerId().equals(userId) ? order.getSellerId() : order.getBuyerId();
         Review review = new Review();
         review.setOrderId(orderId);
@@ -186,6 +188,7 @@ public class OrderService {
         if (order.getStatus() != Order.OrderStatus.PAID && order.getStatus() != Order.OrderStatus.SHIPPED) {
             throw new IllegalArgumentException("当前订单状态不能申请退款");
         }
+        sensitiveWordService.rejectIfSensitive(reason);
         order.setStatus(Order.OrderStatus.REFUNDING);
         order.setRemark(reason);
         orderRepository.save(order);

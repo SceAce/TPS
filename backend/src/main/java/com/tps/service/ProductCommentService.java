@@ -32,6 +32,7 @@ public class ProductCommentService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
+    private final SensitiveWordService sensitiveWordService;
 
     public Page<ProductCommentResponse> list(Long productId, Long viewerId, int page, int size) {
         ensureProductExists(productId);
@@ -56,6 +57,7 @@ public class ProductCommentService {
         if (content.isBlank()) {
             throw new IllegalArgumentException("评论内容不能为空");
         }
+        sensitiveWordService.rejectIfSensitive(content);
 
         ProductComment comment = new ProductComment();
         comment.setProductId(productId);

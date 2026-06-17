@@ -29,6 +29,7 @@ public class MessageService {
     private final ProductImageRepository productImageRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
+    private final SensitiveWordService sensitiveWordService;
 
     @Transactional
     public ConversationResponse getOrCreateConversation(Long userId, Long targetUserId, Long productId) {
@@ -76,6 +77,7 @@ public class MessageService {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("消息内容不能为空");
         }
+        sensitiveWordService.rejectIfSensitive(content);
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
         if (Boolean.TRUE.equals(sender.getMuted())) {

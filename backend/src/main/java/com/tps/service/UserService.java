@@ -21,6 +21,7 @@ public class UserService {
     private final ProductRepository productRepository;
     private final ReviewRepository reviewRepository;
     private final FileService fileService;
+    private final SensitiveWordService sensitiveWordService;
 
     public UserProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -31,6 +32,7 @@ public class UserService {
     public UserProfileResponse updateProfile(Long userId, UpdateProfileRequest req) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        sensitiveWordService.rejectIfSensitive(req.getNickname(), req.getBio(), req.getLocation(), req.getShippingAddress());
         if (req.getNickname() != null) user.setNickname(req.getNickname());
         if (req.getBio() != null) user.setBio(req.getBio());
         if (req.getLocation() != null) user.setLocation(req.getLocation());
