@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.UpdateProfileRequest
 import com.tps.data.remote.dto.UserProfile
@@ -50,7 +51,7 @@ class ProfileViewModel @Inject constructor(
                 val resp = apiService.getMyProfile()
                 _uiState.value = _uiState.value.copy(profile = resp.data, isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "资料加载失败"))
             }
         }
     }
@@ -67,7 +68,7 @@ class ProfileViewModel @Inject constructor(
                 loadProfile()
                 _uiState.value = _uiState.value.copy(updateSuccess = true)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "资料保存失败"))
             }
         }
     }
@@ -86,7 +87,7 @@ class ProfileViewModel @Inject constructor(
                 apiService.updateAvatar(url)
                 loadProfile()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "头像更新失败"))
             }
         }
     }

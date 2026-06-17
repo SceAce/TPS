@@ -6,6 +6,7 @@ package com.tps.ui.message
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.websocket.ChatMessage
 import com.tps.data.remote.websocket.StompClient
@@ -116,7 +117,7 @@ class ChatViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _error.value = e.message ?: "发送消息失败"
+                _error.value = userFacingApiErrorMessage(e, "发送消息失败")
             }
         }
     }

@@ -6,6 +6,7 @@ package com.tps.ui.product
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.apiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.ProductDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -104,7 +105,7 @@ class ProductViewModel @Inject constructor(
 
     private fun errorMessage(error: Exception): String {
         return if (lastActionWasSearch && error is HttpException && error.code() == 400) {
-            "无法搜索请重试"
+            apiErrorMessage(error) ?: "无法搜索请重试"
         } else {
             error.message ?: "加载失败"
         }

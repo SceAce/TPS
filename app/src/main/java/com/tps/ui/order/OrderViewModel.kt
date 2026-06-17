@@ -6,6 +6,7 @@ package com.tps.ui.order
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.OrderDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,7 +40,7 @@ class OrderViewModel @Inject constructor(
                 val resp = apiService.getMyOrders(role = role)
                 _uiState.value = _uiState.value.copy(orders = resp.data?.content ?: emptyList(), isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "订单加载失败"))
             }
         }
     }
@@ -54,7 +55,7 @@ class OrderViewModel @Inject constructor(
                 apiService.payOrder(orderId)
                 loadOrders()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "支付失败"))
             }
         }
     }
@@ -65,7 +66,7 @@ class OrderViewModel @Inject constructor(
                 apiService.confirmOrder(orderId)
                 loadOrders()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "确认收货失败"))
             }
         }
     }
@@ -76,7 +77,7 @@ class OrderViewModel @Inject constructor(
                 apiService.shipOrder(orderId)
                 loadOrders()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "发货失败"))
             }
         }
     }
@@ -87,7 +88,7 @@ class OrderViewModel @Inject constructor(
                 apiService.cancelOrder(orderId)
                 loadOrders()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "取消订单失败"))
             }
         }
     }
@@ -99,7 +100,7 @@ class OrderViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(successMessage = "评价已提交")
                 loadOrders()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "评价提交失败"))
             }
         }
     }

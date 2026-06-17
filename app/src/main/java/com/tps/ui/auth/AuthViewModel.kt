@@ -10,6 +10,7 @@ import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.apiErrorMessage
 import com.tps.data.remote.dto.LoginRequest
 import com.tps.data.remote.dto.RegisterRequest
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.util.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,7 @@ class AuthViewModel @Inject constructor(
             try {
                 apiService.sendCode(phone)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "验证码发送失败"))
             }
         }
     }
@@ -84,7 +85,7 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isLoading = false, error = resp.message)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "注册失败，请检查后重试"))
             }
         }
     }

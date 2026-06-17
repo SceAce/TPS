@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.ProductRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -81,7 +82,7 @@ class PublishProductViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isLoading = false, error = response.message)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "商品发布失败"))
             }
         }
     }

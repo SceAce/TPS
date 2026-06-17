@@ -6,6 +6,7 @@ package com.tps.ui.message
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.ConversationDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +38,7 @@ class MessageViewModel @Inject constructor(
                 val resp = apiService.getConversations()
                 _uiState.value = _uiState.value.copy(conversations = resp.data?.content ?: emptyList(), isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "会话加载失败"))
             }
         }
     }

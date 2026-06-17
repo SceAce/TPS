@@ -17,6 +17,14 @@ class AuthErrorMessageTest {
     }
 
     @Test
+    fun loginErrorMessageUsesSensitiveWordMessageWhenAvailable() {
+        val body = """{"code":400,"message":"内容包含敏感词，请修改后再提交","data":null}"""
+        val error = HttpException(Response.error<Unit>(400, body.toResponseBody(null)))
+
+        assertEquals("内容包含敏感词，请修改后再提交", loginErrorMessage(error))
+    }
+
+    @Test
     fun loginErrorMessageMaps400ToBannedAccountFallback() {
         val error = HttpException(Response.error<Unit>(400, "".toResponseBody(null)))
 

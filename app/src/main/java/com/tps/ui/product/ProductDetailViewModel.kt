@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.ProductCommentDto
 import com.tps.data.remote.dto.ProductCommentRequest
@@ -71,7 +72,7 @@ class ProductDetailViewModel @Inject constructor(
                 )
                 product?.let { loadComments(it.id, showError = true) }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "商品加载失败"))
             }
         }
     }
@@ -152,7 +153,7 @@ class ProductDetailViewModel @Inject constructor(
         return if (error is HttpException && error.code() == 401) {
             "请先登录后再评论"
         } else {
-            error.message ?: fallback
+            userFacingApiErrorMessage(error, fallback)
         }
     }
 
@@ -163,7 +164,7 @@ class ProductDetailViewModel @Inject constructor(
                 apiService.createOrder(productId = productId, finalPrice = price)
                 _uiState.value = _uiState.value.copy(orderCreated = true)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(orderError = e.message)
+                _uiState.value = _uiState.value.copy(orderError = userFacingApiErrorMessage(e, "下单失败"))
             }
         }
     }
@@ -174,7 +175,7 @@ class ProductDetailViewModel @Inject constructor(
                 val resp = apiService.getOrCreateConversation(targetUserId = sellerId, productId = productId)
                 resp.data?.let { _uiState.value = _uiState.value.copy(navigateToChatId = it.id) }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message ?: "无法创建会话")
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "无法创建会话"))
             }
         }
     }
@@ -189,7 +190,7 @@ class ProductDetailViewModel @Inject constructor(
                 val resp = apiService.toggleFavorite(productId)
                 _uiState.value = _uiState.value.copy(isFavorite = resp.data == true)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message ?: "收藏操作失败")
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "收藏操作失败"))
             }
         }
     }
@@ -200,7 +201,7 @@ class ProductDetailViewModel @Inject constructor(
                 apiService.updateProductStatus(productId, "OFF")
                 _uiState.value = _uiState.value.copy(deleted = true, actionSuccess = "商品已下架")
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "商品下架失败"))
             }
         }
     }
@@ -214,7 +215,7 @@ class ProductDetailViewModel @Inject constructor(
                     actionSuccess = if (status == "ON_SALE") "商品已重新上架" else "商品已下架"
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "商品状态更新失败"))
             }
         }
     }
@@ -225,7 +226,7 @@ class ProductDetailViewModel @Inject constructor(
                 val resp = apiService.bumpProduct(productId)
                 _uiState.value = _uiState.value.copy(product = resp.data ?: _uiState.value.product, actionSuccess = "商品已擦亮")
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "擦亮失败"))
             }
         }
     }
@@ -249,7 +250,7 @@ class ProductDetailViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isReporting = false, error = resp.message)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isReporting = false, error = e.message ?: "举报失败")
+                _uiState.value = _uiState.value.copy(isReporting = false, error = userFacingApiErrorMessage(e, "举报失败"))
             }
         }
     }

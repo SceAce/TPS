@@ -6,6 +6,7 @@ package com.tps.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.FeedbackDto
 import com.tps.data.remote.dto.FeedbackRequest
@@ -40,7 +41,7 @@ class FeedbackViewModel @Inject constructor(
                     isLoading = false
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "反馈加载失败"))
             }
         }
     }
@@ -56,7 +57,7 @@ class FeedbackViewModel @Inject constructor(
                 )
                 loadMyFeedback()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "反馈提交失败"))
             }
         }
     }
