@@ -239,6 +239,22 @@ class BackendIntegrationTest {
     }
 
     @Test
+    void expandedSensitiveWordTermsAreRejectedFromSearchAndProductContent() throws Exception {
+        mockMvc.perform(get("/api/products").param("keyword", "论文代写"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("无法搜索请重试"));
+
+        String sellerToken = register("13800138623", "expanded-clean-seller").at("/data/token").asText();
+        mockMvc.perform(post("/api/products")
+                        .header("Authorization", "Bearer " + sellerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("title", "校园卡买卖", "description", "clean", "price", new BigDecimal("10.00"), "category", "digital", "condition", "GOOD", "location", "Shanghai"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("标题包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("title"));
+    }
+
+    @Test
     void userGeneratedContentRejectsSensitiveWordsAcrossEntryPoints() throws Exception {
         String sellerToken = register("13800138620", "clean-seller").at("/data/token").asText();
         String buyerToken = register("13800138621", "clean-buyer").at("/data/token").asText();
