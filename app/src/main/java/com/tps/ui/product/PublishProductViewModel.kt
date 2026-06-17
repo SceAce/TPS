@@ -9,7 +9,9 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.UserFacingApiError
 import com.tps.data.remote.userFacingApiErrorMessage
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.ProductRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +27,7 @@ import javax.inject.Inject
 data class PublishUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
+    val fieldError: UserFacingApiError? = null,
     val isSuccess: Boolean = false,
     val successMessage: String? = null,
     val selectedImages: List<Uri> = emptyList()
@@ -54,12 +57,12 @@ class PublishProductViewModel @Inject constructor(
     fun publish(title: String, description: String, price: Double, category: String, condition: String, location: String) {
         val validationError = validate(title, price, category, condition)
         if (validationError != null) {
-            _uiState.value = _uiState.value.copy(error = validationError)
+            _uiState.value = _uiState.value.copy(error = validationError, fieldError = null)
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, fieldError = null)
             try {
                 val imageUrls = _uiState.value.selectedImages.mapNotNull { uri ->
                     val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
@@ -82,9 +85,18 @@ class PublishProductViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isLoading = false, error = response.message)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "商品发布失败"))
+                val apiError = userFacingApiError(e, "商品发布失败")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = apiError.message,
+                    fieldError = apiError.takeIf { it.isFieldError }
+                )
             }
         }
+    }
+
+    fun clearFieldError() {
+        _uiState.value = _uiState.value.copy(fieldError = null, error = null)
     }
 
     private fun validate(title: String, price: Double, category: String, condition: String): String? {

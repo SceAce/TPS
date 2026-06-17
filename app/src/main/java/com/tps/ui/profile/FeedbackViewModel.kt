@@ -6,6 +6,8 @@ package com.tps.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.UserFacingApiError
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.FeedbackDto
@@ -20,7 +22,8 @@ data class FeedbackUiState(
     val feedbackList: List<FeedbackDto> = emptyList(),
     val isLoading: Boolean = false,
     val submitSuccess: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val fieldError: UserFacingApiError? = null
 )
 
 @HiltViewModel
@@ -48,7 +51,7 @@ class FeedbackViewModel @Inject constructor(
 
     fun submitFeedback(type: String, content: String, contact: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null, submitSuccess = false)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, fieldError = null, submitSuccess = false)
             try {
                 apiService.submitFeedback(FeedbackRequest(type, content, contact.takeIf { it.isNotBlank() }))
                 _uiState.value = _uiState.value.copy(
@@ -57,12 +60,21 @@ class FeedbackViewModel @Inject constructor(
                 )
                 loadMyFeedback()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "反馈提交失败"))
+                val apiError = userFacingApiError(e, "反馈提交失败")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = apiError.message,
+                    fieldError = apiError.takeIf { it.isFieldError }
+                )
             }
         }
     }
 
     fun resetSuccess() {
         _uiState.value = _uiState.value.copy(submitSuccess = false)
+    }
+
+    fun clearFieldError() {
+        _uiState.value = _uiState.value.copy(fieldError = null, error = null)
     }
 }

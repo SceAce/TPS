@@ -24,7 +24,11 @@ public class FeedbackService {
 
     @Transactional
     public FeedbackResponse create(Long userId, FeedbackRequest request) {
-        sensitiveWordService.rejectIfSensitive(request.getType(), request.getContent(), request.getContact());
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("type", "反馈类型", request.getType()),
+                sensitiveWordService.field("content", "反馈内容", request.getContent()),
+                sensitiveWordService.field("contact", "联系方式", request.getContact())
+        );
         Feedback feedback = new Feedback();
         feedback.setUserId(userId);
         feedback.setType(request.getType() == null || request.getType().isBlank() ? "GENERAL" : request.getType());

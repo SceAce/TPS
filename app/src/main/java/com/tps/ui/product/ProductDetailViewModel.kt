@@ -9,6 +9,8 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.UserFacingApiError
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.ProductCommentDto
@@ -42,7 +44,8 @@ data class ProductDetailUiState(
     val commentsLoading: Boolean = false,
     val commentSubmitting: Boolean = false,
     val reportSubmitted: Boolean = false,
-    val isReporting: Boolean = false
+    val isReporting: Boolean = false,
+    val fieldError: UserFacingApiError? = null
 )
 
 @HiltViewModel
@@ -104,16 +107,19 @@ class ProductDetailViewModel @Inject constructor(
                 _uiState.value = if (createdComment != null) {
                     _uiState.value.copy(
                         comments = listOf(createdComment) + _uiState.value.comments.filter { it.id != createdComment.id },
-                        commentSubmitting = false,
-                        actionSuccess = "评论已发布"
+                    commentSubmitting = false,
+                    fieldError = null,
+                    actionSuccess = "评论已发布"
                     )
                 } else {
                     _uiState.value.copy(commentSubmitting = false, error = resp.message)
                 }
             } catch (e: Exception) {
+                val apiError = userFacingApiError(e, "评论发布失败")
                 _uiState.value = _uiState.value.copy(
                     commentSubmitting = false,
-                    error = commentErrorMessage(e, "评论发布失败")
+                    error = commentErrorMessage(e, "评论发布失败"),
+                    fieldError = apiError.takeIf { it.isFieldError }
                 )
             }
         }
@@ -237,7 +243,7 @@ class ProductDetailViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isReporting = true, error = null, reportSubmitted = false)
+            _uiState.value = _uiState.value.copy(isReporting = true, error = null, fieldError = null, reportSubmitted = false)
             try {
                 val evidenceUrls = evidenceUris.mapNotNull { uploadImage(it, "report-evidence.jpg") }
                 val resp = apiService.reportProduct(
@@ -250,9 +256,18 @@ class ProductDetailViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isReporting = false, error = resp.message)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isReporting = false, error = userFacingApiErrorMessage(e, "举报失败"))
+                val apiError = userFacingApiError(e, "举报失败")
+                _uiState.value = _uiState.value.copy(
+                    isReporting = false,
+                    error = apiError.message,
+                    fieldError = apiError.takeIf { it.isFieldError }
+                )
             }
         }
+    }
+
+    fun clearFieldError() {
+        _uiState.value = _uiState.value.copy(fieldError = null, error = null)
     }
 
     fun consumeActionSuccess() {

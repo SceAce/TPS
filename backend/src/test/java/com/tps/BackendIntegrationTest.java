@@ -244,7 +244,6 @@ class BackendIntegrationTest {
         String buyerToken = register("13800138621", "clean-buyer").at("/data/token").asText();
         Long sellerId = userRepository.findByPhone("13800138620").orElseThrow().getId();
         Long productId = createProduct(sellerToken, null);
-        String expectedMessage = "内容包含敏感词，请修改后再提交";
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -256,35 +255,47 @@ class BackendIntegrationTest {
                                 "nickname", "傻逼用户"
                         ))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("昵称包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("nickname"))
+                .andExpect(jsonPath("$.data.fields[0].label").value("昵称"))
+                .andExpect(jsonPath("$.data.fields[0].message").value("昵称包含敏感词"));
 
         mockMvc.perform(put("/api/users/me")
                         .header("Authorization", "Bearer " + buyerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("nickname", "clean", "bio", "你 真 垃 圾", "location", "Shanghai"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("个人简介包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("bio"))
+                .andExpect(jsonPath("$.data.fields[0].label").value("个人简介"));
 
         mockMvc.perform(post("/api/products")
                         .header("Authorization", "Bearer " + sellerToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("title", "二手电子烟", "description", "clean", "price", new BigDecimal("10.00"), "category", "digital", "condition", "GOOD", "location", "Shanghai"))))
+                        .content(json(Map.of("title", "二手电子烟", "description", "去死吧", "price", new BigDecimal("10.00"), "category", "digital", "condition", "GOOD", "location", "Shanghai"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("标题、描述包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields", hasSize(2)))
+                .andExpect(jsonPath("$.data.fields[0].field").value("title"))
+                .andExpect(jsonPath("$.data.fields[0].label").value("标题"))
+                .andExpect(jsonPath("$.data.fields[1].field").value("description"))
+                .andExpect(jsonPath("$.data.fields[1].label").value("描述"));
 
         mockMvc.perform(put("/api/products/{id}", productId)
                         .header("Authorization", "Bearer " + sellerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("title", "Phone", "description", "去死吧", "price", new BigDecimal("10.00"), "category", "digital", "condition", "GOOD", "location", "Shanghai"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("描述包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("description"));
 
         mockMvc.perform(post("/api/products/{productId}/comments", productId)
                         .header("Authorization", "Bearer " + buyerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("content", "你这个蠢货"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("评论内容包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("content"));
 
         Long conversationId = objectMapper.readTree(mockMvc.perform(post("/api/messages/conversation")
                         .header("Authorization", "Bearer " + buyerToken)
@@ -297,20 +308,23 @@ class BackendIntegrationTest {
                         .header("Authorization", "Bearer " + buyerToken)
                         .param("content", "王 八 蛋"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("消息内容包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("content"));
 
         mockMvc.perform(post("/api/feedback")
                         .header("Authorization", "Bearer " + buyerToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("type", "GENERAL", "content", "客服是废物", "contact", "13800138621"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("反馈内容包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("content"));
 
         mockMvc.perform(post("/api/products/{id}/report", productId)
                         .header("Authorization", "Bearer " + buyerToken)
                         .param("reason", "卖家是傻叉"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("举报原因包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("reason"));
 
         Long orderId = createOrder(buyerToken, productId);
         mockMvc.perform(put("/api/orders/{id}/pay", orderId).header("Authorization", "Bearer " + buyerToken))
@@ -325,7 +339,8 @@ class BackendIntegrationTest {
                         .param("score", "1")
                         .param("content", "垃圾卖家"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(jsonPath("$.message").value("评价内容包含敏感词，请修改后再提交"))
+                .andExpect(jsonPath("$.data.fields[0].field").value("content"));
     }
 
     @Test

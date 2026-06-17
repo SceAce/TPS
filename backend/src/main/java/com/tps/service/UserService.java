@@ -32,7 +32,12 @@ public class UserService {
     public UserProfileResponse updateProfile(Long userId, UpdateProfileRequest req) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
-        sensitiveWordService.rejectIfSensitive(req.getNickname(), req.getBio(), req.getLocation(), req.getShippingAddress());
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("nickname", "昵称", req.getNickname()),
+                sensitiveWordService.field("bio", "个人简介", req.getBio()),
+                sensitiveWordService.field("location", "所在地", req.getLocation()),
+                sensitiveWordService.field("shippingAddress", "收货地址", req.getShippingAddress())
+        );
         if (req.getNickname() != null) user.setNickname(req.getNickname());
         if (req.getBio() != null) user.setBio(req.getBio());
         if (req.getLocation() != null) user.setLocation(req.getLocation());

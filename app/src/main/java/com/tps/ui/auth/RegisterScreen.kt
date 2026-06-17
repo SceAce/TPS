@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketHeroCard
 import com.tps.ui.theme.MarketOrange
@@ -106,7 +107,7 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (uiState.error != null) {
+        if (uiState.error != null && uiState.fieldError == null) {
             Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
         }
 
@@ -127,4 +128,6 @@ fun RegisterScreen(
         }
     }
     }
+
+    FieldErrorDialog(error = uiState.fieldError, onDismiss = viewModel::clearError)
 }

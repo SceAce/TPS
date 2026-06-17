@@ -44,7 +44,9 @@ public class AuthService {
         if (userRepository.existsByStudentId(req.getStudentId())) {
             throw new IllegalArgumentException("学号已认证");
         }
-        sensitiveWordService.rejectIfSensitive(req.getNickname());
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("nickname", "昵称", req.getNickname())
+        );
         User user = new User();
         user.setPhone(req.getPhone());
         user.setStudentId(req.getStudentId());

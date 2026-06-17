@@ -5,7 +5,9 @@ package com.tps.config;
  */
 
 import com.tps.dto.ApiResponse;
+import com.tps.dto.SensitiveContentErrorResponse;
 import com.tps.exception.BusinessException;
+import com.tps.exception.SensitiveContentException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleBusiness(BusinessException e) {
         log.warn("event=business_error code={} status={} message={}", e.getCode(), e.getStatus().value(), e.getMessage());
         return ResponseEntity.status(e.getStatus()).body(ApiResponse.fail(e.getCode(), e.getMessage()));
+    }
+
+    @ExceptionHandler(SensitiveContentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<?> handleSensitiveContent(SensitiveContentException e) {
+        log.warn("event=sensitive_content message={} fields={}", e.getMessage(), e.getFields());
+        return ApiResponse.fail(400, e.getMessage(), new SensitiveContentErrorResponse(e.getFields()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

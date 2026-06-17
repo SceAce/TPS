@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketCard
 import com.tps.ui.theme.MarketEmptyState
@@ -48,7 +49,9 @@ fun FeedbackScreen(
     }
 
     LaunchedEffect(uiState.error) {
-        uiState.error?.let { snackbarHostState.showSnackbar(it) }
+        if (uiState.fieldError == null) {
+            uiState.error?.let { snackbarHostState.showSnackbar(it) }
+        }
     }
 
     Scaffold(
@@ -91,6 +94,8 @@ fun FeedbackScreen(
             }
         }
     }
+
+    FieldErrorDialog(error = uiState.fieldError, onDismiss = viewModel::clearFieldError)
 }
 
 @Composable

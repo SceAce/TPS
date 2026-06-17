@@ -40,6 +40,7 @@ import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tps.data.remote.dto.ProductCommentDto
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.ui.theme.MarketBottomActions
 import com.tps.ui.theme.MarketGreen
@@ -77,7 +78,9 @@ fun ProductDetailScreen(
         if (uiState.deleted) onBack()
     }
     LaunchedEffect(uiState.error) {
-        uiState.error?.let { snackbarHostState.showSnackbar(it) }
+        if (uiState.fieldError == null) {
+            uiState.error?.let { snackbarHostState.showSnackbar(it) }
+        }
     }
     LaunchedEffect(uiState.actionSuccess) {
         uiState.actionSuccess?.let {
@@ -393,6 +396,8 @@ fun ProductDetailScreen(
             }
         }
     }
+
+    FieldErrorDialog(error = uiState.fieldError, onDismiss = viewModel::clearFieldError)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

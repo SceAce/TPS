@@ -77,7 +77,9 @@ public class MessageService {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("消息内容不能为空");
         }
-        sensitiveWordService.rejectIfSensitive(content);
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("content", "消息内容", content)
+        );
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
         if (Boolean.TRUE.equals(sender.getMuted())) {

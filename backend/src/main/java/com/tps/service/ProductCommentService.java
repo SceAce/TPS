@@ -57,7 +57,9 @@ public class ProductCommentService {
         if (content.isBlank()) {
             throw new IllegalArgumentException("评论内容不能为空");
         }
-        sensitiveWordService.rejectIfSensitive(content);
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("content", "评论内容", content)
+        );
 
         ProductComment comment = new ProductComment();
         comment.setProductId(productId);

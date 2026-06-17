@@ -6,10 +6,12 @@ package com.tps.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.UserFacingApiError
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.apiErrorMessage
 import com.tps.data.remote.dto.LoginRequest
 import com.tps.data.remote.dto.RegisterRequest
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.util.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +24,7 @@ import javax.inject.Inject
 data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
+    val fieldError: UserFacingApiError? = null,
     val isSuccess: Boolean = false,
     val isAdmin: Boolean = false
 )
@@ -47,7 +50,7 @@ class AuthViewModel @Inject constructor(
 
     fun login(phone: String, password: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, fieldError = null)
             try {
                 tokenManager.clear()
                 val resp = apiService.login(LoginRequest(phone = phone.trim(), password = password.trim()))
@@ -72,7 +75,7 @@ class AuthViewModel @Inject constructor(
 
     fun register(phone: String, password: String, code: String, studentId: String, nickname: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, fieldError = null)
             try {
                 val resp = apiService.register(RegisterRequest(phone, password, code, studentId, nickname))
                 if (resp.code == 200 && resp.data != null) {
@@ -85,13 +88,18 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isLoading = false, error = resp.message)
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = userFacingApiErrorMessage(e, "注册失败，请检查后重试"))
+                val apiError = userFacingApiError(e, "注册失败，请检查后重试")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = apiError.message,
+                    fieldError = apiError.takeIf { it.isFieldError }
+                )
             }
         }
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.value = _uiState.value.copy(error = null, fieldError = null)
     }
 
     fun resetState() {

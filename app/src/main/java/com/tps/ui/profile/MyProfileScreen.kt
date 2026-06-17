@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketCard
@@ -157,7 +158,7 @@ fun MyProfileScreen(
                     }
                 }
 
-                uiState.error?.let {
+                if (uiState.fieldError == null) uiState.error?.let {
                     Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
                 Button(
@@ -198,6 +199,8 @@ fun MyProfileScreen(
             }
         )
     }
+
+    FieldErrorDialog(error = uiState.fieldError, onDismiss = viewModel::clearFieldError)
 }
 
 @Composable

@@ -6,7 +6,8 @@ package com.tps.ui.message
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tps.data.remote.userFacingApiErrorMessage
+import com.tps.data.remote.UserFacingApiError
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.websocket.ChatMessage
 import com.tps.data.remote.websocket.StompClient
@@ -34,6 +35,9 @@ class ChatViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
+    private val _fieldError = MutableStateFlow<UserFacingApiError?>(null)
+    val fieldError: StateFlow<UserFacingApiError?> = _fieldError
 
     val myUserId: Long get() = tokenManager.getUserId()
 
@@ -117,13 +121,16 @@ class ChatViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _error.value = userFacingApiErrorMessage(e, "发送消息失败")
+                val apiError = userFacingApiError(e, "发送消息失败")
+                _error.value = apiError.message
+                _fieldError.value = apiError.takeIf { it.isFieldError }
             }
         }
     }
 
     fun clearError() {
         _error.value = null
+        _fieldError.value = null
     }
 
     override fun onCleared() {

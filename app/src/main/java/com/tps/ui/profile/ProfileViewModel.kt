@@ -9,6 +9,8 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.UserFacingApiError
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.UpdateProfileRequest
@@ -28,6 +30,7 @@ data class ProfileUiState(
     val profile: UserProfile? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
+    val fieldError: UserFacingApiError? = null,
     val loggedOut: Boolean = false,
     val updateSuccess: Boolean = false
 )
@@ -68,7 +71,11 @@ class ProfileViewModel @Inject constructor(
                 loadProfile()
                 _uiState.value = _uiState.value.copy(updateSuccess = true)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "资料保存失败"))
+                val apiError = userFacingApiError(e, "资料保存失败")
+                _uiState.value = _uiState.value.copy(
+                    error = apiError.message,
+                    fieldError = apiError.takeIf { it.isFieldError }
+                )
             }
         }
     }
@@ -99,6 +106,10 @@ class ProfileViewModel @Inject constructor(
 
     fun clearUpdateSuccess() {
         _uiState.value = _uiState.value.copy(updateSuccess = false)
+    }
+
+    fun clearFieldError() {
+        _uiState.value = _uiState.value.copy(fieldError = null, error = null)
     }
 
     private fun resolveFileName(uri: Uri): String {

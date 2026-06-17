@@ -6,6 +6,8 @@ package com.tps.ui.order
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tps.data.remote.UserFacingApiError
+import com.tps.data.remote.userFacingApiError
 import com.tps.data.remote.userFacingApiErrorMessage
 import com.tps.data.remote.api.ApiService
 import com.tps.data.remote.dto.OrderDto
@@ -19,6 +21,7 @@ data class OrderUiState(
     val orders: List<OrderDto> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
+    val fieldError: UserFacingApiError? = null,
     val role: String = "buyer",
     val successMessage: String? = null
 )
@@ -100,13 +103,17 @@ class OrderViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(successMessage = "评价已提交")
                 loadOrders()
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = userFacingApiErrorMessage(e, "评价提交失败"))
+                val apiError = userFacingApiError(e, "评价提交失败")
+                _uiState.value = _uiState.value.copy(
+                    error = apiError.message,
+                    fieldError = apiError.takeIf { it.isFieldError }
+                )
             }
         }
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.value = _uiState.value.copy(error = null, fieldError = null)
     }
 
     fun clearSuccess() {

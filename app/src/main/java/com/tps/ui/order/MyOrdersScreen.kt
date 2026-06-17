@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketEmptyState
 import com.tps.ui.theme.MarketHeroCard
@@ -47,8 +48,10 @@ fun MyOrdersScreen(initialRole: String? = null, viewModel: OrderViewModel = hilt
 
     uiState.error?.let { err ->
         LaunchedEffect(err) {
-            snackbarHostState.showSnackbar(err)
-            viewModel.clearError()
+            if (uiState.fieldError == null) {
+                snackbarHostState.showSnackbar(err)
+                viewModel.clearError()
+            }
         }
     }
     uiState.successMessage?.let { message ->
@@ -106,6 +109,8 @@ fun MyOrdersScreen(initialRole: String? = null, viewModel: OrderViewModel = hilt
         }
         }
     }
+
+    FieldErrorDialog(error = uiState.fieldError, onDismiss = viewModel::clearError)
 }
 
 @Composable

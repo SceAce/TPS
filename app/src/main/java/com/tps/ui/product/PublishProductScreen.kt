@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.AppAsyncImage
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketCard
@@ -62,7 +63,9 @@ fun PublishProductScreen(onBack: () -> Unit, viewModel: PublishProductViewModel 
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
-        uiState.error?.let { snackbarHostState.showSnackbar(it) }
+        if (uiState.fieldError == null) {
+            uiState.error?.let { snackbarHostState.showSnackbar(it) }
+        }
     }
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
@@ -233,4 +236,6 @@ fun PublishProductScreen(onBack: () -> Unit, viewModel: PublishProductViewModel 
             }
         }
     }
+
+    FieldErrorDialog(error = uiState.fieldError, onDismiss = viewModel::clearFieldError)
 }

@@ -1,7 +1,9 @@
 package com.tps.service;
 
+import com.tps.exception.SensitiveContentException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,9 +42,34 @@ public class SensitiveWordService {
         }
         for (String value : values) {
             if (containsSensitive(value)) {
-                throw new IllegalArgumentException(CONTENT_MESSAGE);
+                throw new SensitiveContentException(List.of(
+                        new SensitiveContentException.FieldViolation("content", "内容", "内容包含敏感词")
+                ));
             }
         }
+    }
+
+    public void rejectIfSensitiveFields(FieldContent... fields) {
+        if (fields == null) {
+            return;
+        }
+        List<SensitiveContentException.FieldViolation> violations = new ArrayList<>();
+        for (FieldContent field : fields) {
+            if (field != null && containsSensitive(field.value())) {
+                violations.add(new SensitiveContentException.FieldViolation(
+                        field.field(),
+                        field.label(),
+                        field.label() + "包含敏感词"
+                ));
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new SensitiveContentException(violations);
+        }
+    }
+
+    public FieldContent field(String field, String label, String value) {
+        return new FieldContent(field, label, value);
     }
 
     public boolean containsSensitive(String value) {
@@ -83,5 +110,8 @@ public class SensitiveWordService {
         return value.toLowerCase(Locale.ROOT)
                 .replaceAll("[\\p{P}\\p{Z}\\s]+", "")
                 .trim();
+    }
+
+    public record FieldContent(String field, String label, String value) {
     }
 }

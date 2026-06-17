@@ -165,7 +165,9 @@ public class OrderService {
         if (reviewRepository.existsByOrderIdAndReviewerId(orderId, userId)) {
             throw new IllegalArgumentException("不能重复评价");
         }
-        sensitiveWordService.rejectIfSensitive(content);
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("content", "评价内容", content)
+        );
         Long revieweeId = order.getBuyerId().equals(userId) ? order.getSellerId() : order.getBuyerId();
         Review review = new Review();
         review.setOrderId(orderId);
@@ -188,7 +190,9 @@ public class OrderService {
         if (order.getStatus() != Order.OrderStatus.PAID && order.getStatus() != Order.OrderStatus.SHIPPED) {
             throw new IllegalArgumentException("当前订单状态不能申请退款");
         }
-        sensitiveWordService.rejectIfSensitive(reason);
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("reason", "退款原因", reason)
+        );
         order.setStatus(Order.OrderStatus.REFUNDING);
         order.setRemark(reason);
         orderRepository.save(order);

@@ -30,4 +30,10 @@ public class ApiResponse<T> {
         r.message = message;
         return r;
     }
+
+    public static <T> ApiResponse<T> fail(int code, String message, T data) {
+        ApiResponse<T> r = fail(code, message);
+        r.data = data;
+        return r;
+    }
 }

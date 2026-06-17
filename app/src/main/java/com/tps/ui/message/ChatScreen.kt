@@ -32,6 +32,7 @@ import com.tps.data.remote.dto.ProductDto
 
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tps.data.remote.websocket.ChatMessage
+import com.tps.ui.common.FieldErrorDialog
 import com.tps.ui.theme.MarketBackground
 import com.tps.ui.theme.MarketGreen
 import com.tps.ui.theme.MarketInk
@@ -53,6 +54,7 @@ fun ChatScreen(
     val title by viewModel.title.collectAsState()
     val product by viewModel.product.collectAsState()
     val error by viewModel.error.collectAsState()
+    val fieldError by viewModel.fieldError.collectAsState()
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     var input by remember { mutableStateOf("") }
@@ -66,9 +68,11 @@ fun ChatScreen(
     }
 
     LaunchedEffect(error) {
-        error?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+        if (fieldError == null) {
+            error?.let {
+                snackbarHostState.showSnackbar(it)
+                viewModel.clearError()
+            }
         }
     }
 
@@ -141,6 +145,8 @@ fun ChatScreen(
             }
         }
     }
+
+    FieldErrorDialog(error = fieldError, onDismiss = viewModel::clearError)
 }
 
 @Composable

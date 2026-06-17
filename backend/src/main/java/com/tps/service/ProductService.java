@@ -49,7 +49,7 @@ public class ProductService {
         if (Boolean.TRUE.equals(user.getPublishBanned())) {
             throw new IllegalArgumentException("账号已被禁止发布商品，请联系管理员");
         }
-        sensitiveWordService.rejectIfSensitive(req.getTitle(), req.getDescription(), req.getCategory(), req.getLocation());
+        validateProductContent(req);
         Product product = new Product();
         product.setUserId(userId);
         product.setTitle(req.getTitle());
@@ -134,7 +134,7 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("商品不存在"));
         if (!product.getUserId().equals(userId)) throw new IllegalArgumentException("无权操作");
-        sensitiveWordService.rejectIfSensitive(req.getTitle(), req.getDescription(), req.getCategory(), req.getLocation());
+        validateProductContent(req);
         product.setTitle(req.getTitle());
         product.setDescription(req.getDescription());
         product.setPrice(req.getPrice());
@@ -212,7 +212,9 @@ public class ProductService {
         if (reportRepository.existsByReporterIdAndProductIdAndStatus(userId, productId, Report.ReportStatus.PENDING)) {
             return;
         }
-        sensitiveWordService.rejectIfSensitive(reason);
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("reason", "举报原因", reason)
+        );
         Report report = new Report();
         report.setReporterId(userId);
         report.setProductId(productId);
@@ -234,6 +236,15 @@ public class ProductService {
                 .filter(url -> url != null && !url.isBlank())
                 .limit(3)
                 .collect(Collectors.joining(","));
+    }
+
+    private void validateProductContent(ProductRequest req) {
+        sensitiveWordService.rejectIfSensitiveFields(
+                sensitiveWordService.field("title", "标题", req.getTitle()),
+                sensitiveWordService.field("description", "描述", req.getDescription()),
+                sensitiveWordService.field("category", "分类", req.getCategory()),
+                sensitiveWordService.field("location", "交易地点", req.getLocation())
+        );
     }
 
     public ProductResponse toResponse(Product p, Long currentUserId) {
