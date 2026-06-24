@@ -18,7 +18,7 @@ echo "WebSocket: $WS_URL"
 echo "Fallback APIs: $API_FALLBACKS"
 echo "Fallback WebSockets: $WS_FALLBACKS"
 echo
-
+# 通过gradlew构建，并且最后给出apk包的路径
 cd "$ROOT_DIR"
 ./gradlew :app:clean :app:assembleDebug \
   -PTPS_API_BASE_URL="$API_BASE_URL" \
